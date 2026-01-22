@@ -41,6 +41,9 @@ export class VisualDashboardView extends ItemView {
 		container.empty();
 		container.addClass('visual-dashboard-container');
 
+		// Apply theme color
+		this.applyThemeColor();
+
 		// Create header - single row
 		const header = this.contentEl.createDiv({ cls: 'dashboard-header' });
 
@@ -195,6 +198,28 @@ export class VisualDashboardView extends ItemView {
 				void this.renderCards();
 			}, 1000)
 		);
+	}
+
+	private applyThemeColor() {
+		const container = this.contentEl;
+		let themeColor: string;
+
+		switch (this.plugin.data.themeColor) {
+			case 'black':
+				themeColor = '#000000';
+				break;
+			case 'custom':
+				themeColor = this.plugin.data.customThemeColor;
+				break;
+			case 'obsidian':
+			default:
+				// Use Obsidian's interactive accent color
+				themeColor = getComputedStyle(document.body).getPropertyValue('--interactive-accent').trim();
+				break;
+		}
+
+		// Set CSS custom property for theme color
+		container.style.setProperty('--masonry-theme-color', themeColor);
 	}
 
 	async renderCards() {

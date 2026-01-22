@@ -68,5 +68,40 @@ export class MiniNotesSettingTab extends PluginSettingTab {
 						window.dispatchEvent(new CustomEvent('mini-notes:settings-changed'));
 					}
 				}));
+
+		new Setting(containerEl)
+			.setName('Theme color')
+			.setDesc('Color for borders, pins, and accents')
+			.addDropdown(dropdown => {
+				dropdown.addOption('obsidian', 'Use Obsidian theme');
+				dropdown.addOption('black', 'Black');
+				dropdown.addOption('custom', 'Custom color');
+				dropdown.setValue(this.plugin.data.themeColor);
+				dropdown.onChange(async (value) => {
+					this.plugin.data.themeColor = value as 'obsidian' | 'black' | 'custom';
+					await this.plugin.savePluginData();
+					window.dispatchEvent(new CustomEvent('mini-notes:settings-changed'));
+					// Show/hide custom color picker
+					const colorSetting = containerEl.querySelector('.custom-color-setting') as HTMLElement;
+					if (colorSetting) {
+						colorSetting.style.display = value === 'custom' ? 'flex' : 'none';
+					}
+				});
+			});
+
+		const customColorSetting = new Setting(containerEl)
+			.setName('Custom theme color')
+			.setDesc('Choose a custom color for borders, pins, and accents')
+			.addColorPicker(colorPicker => colorPicker
+				.setValue(this.plugin.data.customThemeColor)
+				.onChange(async (value) => {
+					this.plugin.data.customThemeColor = value;
+					await this.plugin.savePluginData();
+					window.dispatchEvent(new CustomEvent('mini-notes:settings-changed'));
+				}));
+		
+		// Set initial visibility of custom color setting
+		customColorSetting.settingEl.addClass('custom-color-setting');
+		customColorSetting.settingEl.style.display = this.plugin.data.themeColor === 'custom' ? 'flex' : 'none';
 	}
 }

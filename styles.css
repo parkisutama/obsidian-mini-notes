@@ -141,12 +141,12 @@
 }
 
 .filter-icon.active {
-    color: var(--interactive-accent);
+    color: var(--masonry-theme-color, var(--interactive-accent));
     background: rgba(var(--interactive-accent-rgb), 0.1);
 }
 
 .filter-icon.active svg {
-    fill: var(--interactive-accent);
+    fill: var(--masonry-theme-color, var(--interactive-accent));
 }
 
 .filter-icon svg {
@@ -239,14 +239,14 @@
 }
 
 .dashboard-card.drag-over {
-    border-color: var(--interactive-accent);
+    border-color: var(--masonry-theme-color, var(--interactive-accent));
     border-width: 2px;
     background: rgba(var(--interactive-accent-rgb), 0.05);
 }
 
 /* Pinned card styling */
 .dashboard-card.card-pinned {
-    border-color: var(--interactive-accent);
+    border-color: var(--masonry-theme-color, var(--interactive-accent));
     border-width: 1px;
 }
 
@@ -280,11 +280,11 @@
 
 .card-pin-btn.pinned {
     opacity: 1;
-    color: var(--interactive-accent);
+    color: var(--masonry-theme-color, var(--interactive-accent));
 }
 
 .card-pin-btn.pinned svg {
-    fill: var(--interactive-accent);
+    fill: var(--masonry-theme-color, var(--interactive-accent));
 }
 
 .card-pin-btn svg {
@@ -464,7 +464,7 @@
 
 .card-tag {
     font-size: 10px;
-    color: var(--interactive-accent);
+    color: var(--masonry-theme-color, var(--interactive-accent));
     background: rgba(var(--interactive-accent-rgb), 0.1);
     padding: 2px 6px;
     border-radius: 7px;
@@ -530,11 +530,11 @@
    ============================================ */
 
 .dashboard-card:focus-visible {
-    outline: 2px solid var(--interactive-accent);
+    outline: 2px solid var(--masonry-theme-color, var(--interactive-accent));
     outline-offset: 1px;
 }
 
 .card-pin-btn:focus-visible {
-    outline: 2px solid var(--interactive-accent);
+    outline: 2px solid var(--masonry-theme-color, var(--interactive-accent));
     opacity: 1;
 }
