@@ -1,3 +1,31 @@
+/* ============================================
+   Theme-aware Pastel Colors
+   ============================================ */
+
+/* Light theme pastel colors (default) */
+:root {
+    --pastel-pink: #FFE5E5;
+    --pastel-peach: #FFE5CC;
+    --pastel-yellow: #FFF4CC;
+    --pastel-green: #E5F5E5;
+    --pastel-blue: #E5F2FF;
+    --pastel-purple: #F0E5FF;
+    --pastel-magenta: #FFE5F5;
+    --pastel-gray: #E5E5E5;
+}
+
+/* Dark theme vibrant colors */
+.theme-dark {
+    --pastel-pink: #FF6B9D;
+    --pastel-peach: #FF8A65;
+    --pastel-yellow: #FFD54F;
+    --pastel-green: #4DB6AC;
+    --pastel-blue: #64B5F6;
+    --pastel-purple: #BA68C8;
+    --pastel-magenta: #F06292;
+    --pastel-gray: #90A4AE;
+}
+
 /* Main container */
 .visual-dashboard-container {
     height: 100%;
@@ -411,6 +439,24 @@
     -webkit-line-clamp: 1;
     line-clamp: 1;
     -webkit-box-orient: vertical;
+}
+
+/* White text for colored cards in dark theme */
+.theme-dark .dashboard-card[style*="background-color"] .card-title {
+    color: #FFFFFF;
+}
+
+.theme-dark .dashboard-card[style*="background-color"] .card-preview {
+    color: #FFFFFF;
+}
+
+.theme-dark .dashboard-card[style*="background-color"] .card-date {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.theme-dark .dashboard-card[style*="background-color"] .card-tag {
+    color: #FFFFFF;
+    background: rgba(255, 255, 255, 0.2);
 }
 
 /* ============================================

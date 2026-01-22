@@ -415,16 +415,16 @@ export class VisualDashboardView extends ItemView {
 		setIcon(colorBtn, 'palette');
 		colorBtn.setAttribute('aria-label', 'Change note color');
 		
-		// Create color palette dropdown
+		// Create color palette dropdown using CSS variables
 		const pastelColors = [
-			'#FFE5E5', // Light pink
-			'#FFE5CC', // Light peach
-			'#FFF4CC', // Light yellow
-			'#E5F5E5', // Light green
-			'#E5F2FF', // Light blue
-			'#F0E5FF', // Light purple
-			'#FFE5F5', // Light magenta
-			'#E5E5E5'  // Light gray (remove color)
+			'var(--pastel-pink)',     // Pink
+			'var(--pastel-peach)',    // Peach
+			'var(--pastel-yellow)',   // Yellow
+			'var(--pastel-green)',    // Green
+			'var(--pastel-blue)',     // Blue
+			'var(--pastel-purple)',   // Purple
+			'var(--pastel-magenta)',  // Magenta
+			'var(--pastel-gray)'      // Gray (remove color)
 		];
 		
 		const colorDropdown = card.createDiv({ cls: 'card-color-dropdown' });
@@ -449,8 +449,9 @@ export class VisualDashboardView extends ItemView {
 					card.style.backgroundColor = '';
 					delete this.plugin.data.noteColors[file.path];
 				} else {
-					// Apply color
+					// Apply color using CSS variable
 					card.style.backgroundColor = color;
+					// Store the CSS variable name so it adapts to theme changes
 					this.plugin.data.noteColors[file.path] = color;
 				}
 				
