@@ -264,47 +264,19 @@ export class VisualDashboardView extends ItemView {
 		// Limit after filtering
 		files = files.slice(0, this.plugin.data.maxNotes);
 
-		// Separate pinned and unpinned notes
-		const pinnedFiles: TFile[] = [];
-		const unpinnedFiles: TFile[] = [];
-
-		files.forEach((file: TFile) => {
-			if (this.plugin.isPinned(file.path)) {
-				pinnedFiles.push(file);
-			} else {
-				unpinnedFiles.push(file);
-			}
-		});
-
-		// Sort pinned files by custom order, then by modification time
-		pinnedFiles.sort((a, b) => {
+		// Separate and sort files by pin status
+		const sortByOrder = (a: TFile, b: TFile) => {
 			const aOrder = this.plugin.getOrderIndex(a.path);
 			const bOrder = this.plugin.getOrderIndex(b.path);
 
-			if (aOrder > -1 && bOrder > -1) {
-				return aOrder - bOrder;
-			}
-
-			if (aOrder > -1 && bOrder === -1) return -1;
-			if (aOrder === -1 && bOrder > -1) return 1;
-
+			if (aOrder > -1 && bOrder > -1) return aOrder - bOrder;
+			if (aOrder > -1) return -1;
+			if (bOrder > -1) return 1;
 			return b.stat.mtime - a.stat.mtime;
-		});
+		};
 
-		// Sort unpinned files by custom order, then by modification time
-		unpinnedFiles.sort((a, b) => {
-			const aOrder = this.plugin.getOrderIndex(a.path);
-			const bOrder = this.plugin.getOrderIndex(b.path);
-
-			if (aOrder > -1 && bOrder > -1) {
-				return aOrder - bOrder;
-			}
-
-			if (aOrder > -1 && bOrder === -1) return -1;
-			if (aOrder === -1 && bOrder > -1) return 1;
-
-			return b.stat.mtime - a.stat.mtime;
-		});
+		const pinnedFiles = files.filter(f => this.plugin.isPinned(f.path)).sort(sortByOrder);
+		const unpinnedFiles = files.filter(f => !this.plugin.isPinned(f.path)).sort(sortByOrder);
 
 		// Store the combined order for drag-and-drop
 		this.currentFiles = [...pinnedFiles, ...unpinnedFiles];
@@ -441,22 +413,24 @@ export class VisualDashboardView extends ItemView {
 				colorCircle.setAttribute('aria-label', 'Apply color');
 			}
 			
-			colorCircle.addEventListener('click', async (e: MouseEvent) => {
+			colorCircle.addEventListener('click', (e: MouseEvent) => {
 				e.stopPropagation();
 				
-				if (index === pastelColors.length - 1) {
-					// Remove color
-					card.style.backgroundColor = '';
-					delete this.plugin.data.noteColors[file.path];
-				} else {
-					// Apply color using CSS variable
-					card.style.backgroundColor = color;
-					// Store the CSS variable name so it adapts to theme changes
-					this.plugin.data.noteColors[file.path] = color;
-				}
-				
-				await this.plugin.savePluginData();
-				colorDropdown.removeClass('show');
+				void (async () => {
+					if (index === pastelColors.length - 1) {
+						// Remove color
+						card.setCssProps({ backgroundColor: '' });
+						delete this.plugin.data.noteColors[file.path];
+					} else {
+						// Apply color using CSS variable
+						card.setCssProps({ backgroundColor: color });
+						// Store the CSS variable name so it adapts to theme changes
+						this.plugin.data.noteColors[file.path] = color;
+					}
+					
+					await this.plugin.savePluginData();
+					colorDropdown.removeClass('show');
+				})();
 			});
 		});
 		

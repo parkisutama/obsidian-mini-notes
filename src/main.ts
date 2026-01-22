@@ -1,4 +1,4 @@
-import { Plugin, WorkspaceLeaf, addIcon, Notice, normalizePath, TFile } from 'obsidian';
+import { Plugin, WorkspaceLeaf, addIcon, Notice, normalizePath } from 'obsidian';
 import { DashboardData, DEFAULT_DATA, VIEW_TYPE_VISUAL_DASHBOARD, DASHBOARD_ICON } from './types';
 import { VisualDashboardView } from './views/dashboard-view';
 import { MiniNotesSettingTab } from './settings';
@@ -118,7 +118,7 @@ export default class VisualDashboardPlugin extends Plugin {
 			
 			if (!folder) {
 				await this.app.vault.createFolder(folderPath);
-				new Notice('Mini Notes folder created');
+				new Notice('Mini notes folder created');
 			}
 		} catch (error) {
 			console.error('Error creating Mini Notes folder:', error);
@@ -127,19 +127,13 @@ export default class VisualDashboardPlugin extends Plugin {
 
 	async createMiniNote() {
 		try {
-			const folderPath = normalizePath('Mini Notes');
-			
 			// Ensure folder exists
 			await this.ensureMiniNotesFolder();
+			const folderPath = normalizePath('Mini Notes');
 			
 			// Generate filename with date only
 			const now = new Date();
 			const date = now.toLocaleDateString('en-CA'); // YYYY-MM-DD format
-			const time = now.toLocaleTimeString('en-US', { 
-				hour12: false, 
-				hour: '2-digit', 
-				minute: '2-digit' 
-			}); // HH:MM format
 			
 			// Find available filename
 			let fileName = `${date}.md`;
@@ -170,10 +164,6 @@ export default class VisualDashboardPlugin extends Plugin {
 	async activateView() {
 		try {
 			const { workspace } = this.app;
-
-			// Ensure folder exists when opening the view
-			await this.ensureMiniNotesFolder();
-
 			let leaf: WorkspaceLeaf | null = null;
 			const leaves = workspace.getLeavesOfType(VIEW_TYPE_VISUAL_DASHBOARD);
 
