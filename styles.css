@@ -1,0 +1,540 @@
+/* Main container */
+.visual-dashboard-container {
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 16px 24px;
+    background: var(--background-primary);
+}
+
+/* Scrollbar */
+.visual-dashboard-container::-webkit-scrollbar {
+    width: 5px;
+}
+
+.visual-dashboard-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.visual-dashboard-container::-webkit-scrollbar-thumb {
+    background: var(--background-modifier-border);
+    border-radius: 2px;
+}
+
+/* ============================================
+   Header - Single Row
+   ============================================ */
+
+.dashboard-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.dashboard-title {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-normal);
+}
+
+.dashboard-title.editable-title {
+    cursor: pointer;
+}
+
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Tag Filter Wrapper */
+.tag-filter-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+/* Tag Dropdown Menu */
+.tag-dropdown-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    min-width: 180px;
+    max-width: 240px;
+    max-height: 400px;
+    overflow-y: auto;
+    background: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    padding: 4px;
+    display: none;
+}
+
+.tag-dropdown-menu.show {
+    display: block;
+}
+
+.tag-dropdown-menu::-webkit-scrollbar {
+    width: 6px;
+}
+
+.tag-dropdown-menu::-webkit-scrollbar-thumb {
+    background: var(--background-modifier-border);
+    border-radius: 3px;
+}
+
+/* Tag Dropdown Items */
+.tag-dropdown-item {
+    padding: 6px 10px;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 13px;
+    color: var(--text-normal);
+    transition: background-color 0.1s;
+}
+
+.tag-dropdown-item:hover {
+    background: var(--background-modifier-hover);
+}
+
+/* Tag Pills in Dropdown */
+.tag-dropdown-item.tag-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 8px;
+    margin: 2px;
+    background: var(--tag-background);
+    color: var(--tag-color);
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.15s;
+}
+
+.tag-dropdown-item.tag-pill:hover {
+    background: var(--tag-background-hover);
+    color: var(--text-normal);
+}
+
+/* Unified Filter Icons */
+.filter-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: all 0.15s;
+}
+
+.filter-icon:hover {
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
+}
+
+.filter-icon.active {
+    color: var(--interactive-accent);
+    background: rgba(var(--interactive-accent-rgb), 0.1);
+}
+
+.filter-icon.active svg {
+    fill: var(--interactive-accent);
+}
+
+.filter-icon svg {
+    width: 15px;
+    height: 15px;
+    pointer-events: none;
+}
+
+/* ============================================
+   Section Separator
+   ============================================ */
+.section-separator {
+    width: 100%;
+    height: 1px;
+    background: var(--background-modifier-border);
+    margin: 24px 0;
+}
+
+/* ============================================
+   Mini Notes Grid - CSS Columns (no gaps)
+   ============================================ */
+.mini-notes-grid {
+    display: flex;
+    flex-direction: column;
+}
+
+.mini-notes-grid-section {
+    column-count: 5;
+    column-gap: 12px;
+    width: 100%;
+}
+
+@media (min-width: 1400px) {
+    .mini-notes-grid-section {
+        column-count: 6;
+    }
+}
+
+@media (min-width: 1100px) and (max-width: 1399px) {
+    .mini-notes-grid-section {
+        column-count: 5;
+    }
+}
+
+@media (min-width: 800px) and (max-width: 1099px) {
+    .mini-notes-grid-section {
+        column-count: 4;
+    }
+}
+
+@media (min-width: 500px) and (max-width: 799px) {
+    .mini-notes-grid-section {
+        column-count: 3;
+    }
+}
+
+@media (max-width: 499px) {
+    .mini-notes-grid-section {
+        column-count: 2;
+    }
+}
+
+/* ============================================
+   Cards
+   ============================================ */
+
+.dashboard-card {
+    position: relative;
+    background: var(--background-secondary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 3px;
+    padding: 10px 12px;
+    cursor: pointer;
+    transition: border-color 0.15s, transform 0.15s, opacity 0.15s;
+    display: inline-block;
+    width: 100%;
+    break-inside: avoid;
+    margin-bottom: 12px;
+}
+
+.dashboard-card:hover {
+    border-color: var(--text-muted);
+}
+
+/* Drag and Drop States */
+.dashboard-card.dragging {
+    opacity: 0.5;
+    cursor: pointer;
+    transform: scale(0.98);
+}
+
+.dashboard-card.drag-over {
+    border-color: var(--interactive-accent);
+    border-width: 2px;
+    background: rgba(var(--interactive-accent-rgb), 0.05);
+}
+
+/* Pinned card styling */
+.dashboard-card.card-pinned {
+    border-color: var(--interactive-accent);
+    border-width: 1px;
+}
+
+/* ============================================
+   Pin Button
+   ============================================ */
+
+.card-pin-btn {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: var(--text-muted);
+    opacity: 0;
+    transition: opacity 0.15s, background 0.15s;
+    z-index: 10;
+}
+
+.dashboard-card:hover .card-pin-btn {
+    opacity: 1;
+}
+
+.card-pin-btn:hover {
+    color: var(--text-normal);
+}
+
+.card-pin-btn.pinned {
+    opacity: 1;
+    color: var(--interactive-accent);
+}
+
+.card-pin-btn.pinned svg {
+    fill: var(--interactive-accent);
+}
+
+.card-pin-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* ============================================
+   Color Button & Dropdown
+   ============================================ */
+
+.card-color-btn {
+    position: absolute;
+    top: 6px;
+    right: 36px;
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: var(--text-muted);
+    opacity: 0;
+    z-index: 10;
+    cursor: pointer;
+}
+
+.dashboard-card:hover .card-color-btn {
+    opacity: 1;
+}
+
+.card-color-btn:hover {
+    color: var(--text-normal);
+}
+
+.card-color-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+.card-color-dropdown {
+    position: absolute;
+    top: 36px;
+    right: 36px;
+    display: none;
+    gap: 4px;
+    padding: 6px;
+    background: var(--background-secondary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    z-index: 11;
+}
+
+.card-color-dropdown.show {
+    display: flex;
+}
+
+.card-color-dropdown .color-circle {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    transition: border-width 0.1s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.card-color-dropdown .color-circle:hover {
+    border-width: 2px;
+}
+
+.card-color-dropdown .color-circle-clear {
+    position: relative;
+    background: var(--background-secondary) !important;
+}
+
+.card-color-dropdown .color-circle-clear::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(45deg);
+    width: 10px;
+    height: 1px;
+    background: var(--text-muted);
+}
+
+.card-color-dropdown .color-circle-clear::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-45deg);
+    width: 10px;
+    height: 1px;
+    background: var(--text-muted);
+}
+
+/* ============================================
+   Card Header
+   ============================================ */
+
+.card-header {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 6px;
+    padding-right: 22px;
+}
+
+.card-icon {
+    display: none;
+}
+
+.card-title {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-normal);
+    line-height: 1.35;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+    -webkit-box-orient: vertical;
+}
+
+/* ============================================
+   Card Content
+   ============================================ */
+
+.card-content {
+    flex: 1;
+    overflow: hidden;
+    margin-bottom: 6px;
+}
+
+.card-preview {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--text-muted);
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 8;
+    line-clamp: 8;
+}
+
+.card-preview-empty {
+    font-style: italic;
+    color: var(--text-faint);
+}
+
+/* ============================================
+   Card Footer - Tags left, Date right
+   ============================================ */
+
+.card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.card-tags {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.card-tag {
+    font-size: 10px;
+    color: var(--interactive-accent);
+    background: rgba(var(--interactive-accent-rgb), 0.1);
+    padding: 2px 6px;
+    border-radius: 7px;
+    white-space: nowrap;
+    max-width: 70px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.card-tag-more {
+    font-size: 9px;
+    color: var(--text-faint);
+    padding: 2px 4px;
+}
+
+.card-footer-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.card-date {
+    font-size: 10px;
+    color: var(--text-faint);
+    white-space: nowrap;
+}
+
+/* ============================================
+   Empty State
+   ============================================ */
+
+.dashboard-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+}
+
+.empty-icon {
+    font-size: 32px;
+    margin-bottom: 10px;
+    opacity: 0.4;
+}
+
+.dashboard-empty-state h3 {
+    margin: 0 0 4px 0;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-normal);
+}
+
+.dashboard-empty-state p {
+    margin: 0;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+/* ============================================
+   Focus States
+   ============================================ */
+
+.dashboard-card:focus-visible {
+    outline: 2px solid var(--interactive-accent);
+    outline-offset: 1px;
+}
+
+.card-pin-btn:focus-visible {
+    outline: 2px solid var(--interactive-accent);
+    opacity: 1;
+}
