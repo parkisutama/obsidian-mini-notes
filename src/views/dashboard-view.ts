@@ -1,4 +1,4 @@
-import { ItemView, TFile, WorkspaceLeaf, setIcon } from 'obsidian';
+import { ItemView, TFile, WorkspaceLeaf, setIcon, MarkdownRenderer } from 'obsidian';
 import type VisualDashboardPlugin from '../main';
 import { VIEW_TYPE_VISUAL_DASHBOARD } from '../types';
 import { extractTags, getPreviewText, stripMarkdown } from '../utils/markdown';
@@ -419,11 +419,11 @@ export class VisualDashboardView extends ItemView {
 				void (async () => {
 					if (index === pastelColors.length - 1) {
 						// Remove color
-						card.setCssProps({ backgroundColor: '' });
+						card.style.backgroundColor = '';
 						delete this.plugin.data.noteColors[file.path];
 					} else {
 						// Apply color using CSS variable
-						card.setCssProps({ backgroundColor: color });
+						card.style.backgroundColor = color;
 						// Store the CSS variable name so it adapts to theme changes
 						this.plugin.data.noteColors[file.path] = color;
 					}
@@ -455,13 +455,18 @@ export class VisualDashboardView extends ItemView {
 		});
 		title.setAttribute('title', file.basename);
 
-		// Card content (preview)
+		// Card content (preview) - render with Obsidian's markdown renderer
 		const cardContent = card.createDiv({ cls: 'card-content' });
 		if (previewText.trim()) {
-			cardContent.createEl('p', {
-				text: previewText,
-				cls: 'card-preview'
-			});
+			const previewContainer = cardContent.createDiv({ cls: 'card-preview' });
+			// Render markdown natively with Obsidian's renderer
+			await MarkdownRenderer.render(
+				this.app,
+				previewText,
+				previewContainer,
+				file.path,
+				this
+			);
 		} else {
 			cardContent.createEl('p', {
 				text: 'Empty note...',
