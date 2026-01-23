@@ -3,7 +3,7 @@
 	"name": "Mini Notes",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "Create and manage fast mini notes in a masonry view with pinning, tagging, filtering, and drag-and-drop organization.",
+	"description": "Quickly jot down notes during focus sessions. Review them later in a colorful masonry view.",
 	"author": "Bana Tawalbeh",
 	"authorUrl": "https://github.com/rknastenka",
 	"isDesktopOnly": false
