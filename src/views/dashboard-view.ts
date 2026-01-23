@@ -340,18 +340,18 @@ export class VisualDashboardView extends ItemView {
 			// Get content and preview
 			const content = await this.app.vault.cachedRead(file);
 		const cleanContent = stripMarkdown(content);
-		const previewLength = Math.min(cleanContent.length, 300);
+		const previewLength = Math.min(cleanContent.length, 800);
 		const previewText = getPreviewText(content, previewLength);
 
 		// Dynamic sizing based on content length - more granular
 		const contentLen = cleanContent.length;
-		if (contentLen > 1500) {
+		if (contentLen > 800) {
 			card.addClass('card-xl');
-		} else if (contentLen > 800) {
+		} else if (contentLen > 500) {
 			card.addClass('card-large');
-		} else if (contentLen > 400) {
+		} else if (contentLen > 250) {
 			card.addClass('card-medium');
-		} else if (contentLen > 150) {
+		} else if (contentLen > 100) {
 			card.addClass('card-small');
 		} else {
 			card.addClass('card-xs');

@@ -477,8 +477,8 @@
     overflow: hidden;
     display: -webkit-box;
     -webkit-box-orient: vertical;
-    -webkit-line-clamp: 8;
-    line-clamp: 8;
+    -webkit-line-clamp: 20;
+    line-clamp: 20;
 }
 
 .card-preview-empty {
