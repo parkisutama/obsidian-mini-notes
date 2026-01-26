@@ -360,6 +360,7 @@
     top: 36px;
     right: 36px;
     display: none;
+    flex-wrap: wrap;
     gap: 4px;
     padding: 6px;
     background: var(--background-secondary);
