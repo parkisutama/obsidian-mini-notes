@@ -131,8 +131,10 @@ export class VisualDashboardView extends ItemView {
 		// Render the cards
 		await this.renderCards();
 
-		// Listen for settings changes using custom event
-		window.addEventListener('mini-notes:settings-changed', this.settingsChangedHandler);
+		// Listen for settings changes using workspace event
+		this.registerEvent(
+			this.app.workspace.on('mini-notes:settings-changed', this.settingsChangedHandler)
+		);
 
 		// Listen for file changes to auto-refresh
 		this.registerEvent(
@@ -594,7 +596,7 @@ export class VisualDashboardView extends ItemView {
 			this.refreshTimeoutId = null;
 		}
 		
-		window.removeEventListener('mini-notes:settings-changed', this.settingsChangedHandler);
+		// Event cleanup handled automatically by registerEvent
 		this.contentEl.empty();
 	}
 }

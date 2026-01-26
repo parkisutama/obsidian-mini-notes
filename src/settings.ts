@@ -23,11 +23,7 @@ export class MiniNotesSettingTab extends PluginSettingTab {
 					this.plugin.data.viewTitle = value || 'Do Your Best Today!';
 					await this.plugin.savePluginData();
 					// Trigger custom event to update views
-					window.dispatchEvent(new CustomEvent('mini-notes:settings-changed'));
-				}));
-
-		new Setting(containerEl)
-			.setName('Source folder')
+				this.app.workspace.trigger('mini-notes:settings-changed');
 			.setDesc('Folder to fetch notes from (default is "/" for all notes in vault)')
 			.addDropdown(dropdown => {
 				// Get all folders in vault
@@ -47,7 +43,7 @@ export class MiniNotesSettingTab extends PluginSettingTab {
 				dropdown.onChange(async (value) => {
 					this.plugin.data.sourceFolder = value;
 					await this.plugin.savePluginData();
-					window.dispatchEvent(new CustomEvent('mini-notes:settings-changed'));
+					this.app.workspace.trigger('mini-notes:settings-changed');
 				});
 			});
 
@@ -63,11 +59,7 @@ export class MiniNotesSettingTab extends PluginSettingTab {
 						this.plugin.data.maxNotes = num;
 						await this.plugin.savePluginData();
 						// Trigger custom event to update views
-						window.dispatchEvent(new CustomEvent('mini-notes:settings-changed'));
-					}
-				}));
-
-		new Setting(containerEl)
+					this.app.workspace.trigger('mini-notes:settings-changed');
 			.setName('Theme color')
 			.setDesc('Color for borders, pins, and accents')
 			.addDropdown(dropdown => {
@@ -78,7 +70,7 @@ export class MiniNotesSettingTab extends PluginSettingTab {
 				dropdown.onChange(async (value) => {
 					this.plugin.data.themeColor = value as 'obsidian' | 'black' | 'custom';
 					await this.plugin.savePluginData();
-					window.dispatchEvent(new CustomEvent('mini-notes:settings-changed'));
+				this.app.workspace.trigger('mini-notes:settings-changed');
 					// Show/hide custom color picker
 					const colorSetting = containerEl.querySelector('.custom-color-setting') as HTMLElement;
 					if (colorSetting) {
@@ -95,7 +87,7 @@ export class MiniNotesSettingTab extends PluginSettingTab {
 				.onChange(async (value) => {
 					this.plugin.data.customThemeColor = value;
 					await this.plugin.savePluginData();
-					window.dispatchEvent(new CustomEvent('mini-notes:settings-changed'));
+					this.app.workspace.trigger('mini-notes:settings-changed');
 				}));
 		
 		// Set initial visibility of custom color setting
