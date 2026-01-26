@@ -19,15 +19,12 @@ Quickly jot down notes during your focus sessions without worrying about organiz
 ![Masonry View](src/imgs/dark-theme.png)
 
 ### **IOS & Android Mobile Support**
-
-<img src="src/imgs/android.jpeg" alt="Android View" style="max-height: 500px;" />
+<img src="src/imgs/android.jpeg" alt="Android View" height="500" />
 
 ---
-
-### 
 **Coloring Notes:**  Hover on a note >> select the color you want.
 
-<img src="src/imgs/coloring.png" alt="Android View" style="max-width: 900px;" />
+<img src="src/imgs/coloring.png" alt="Coloring Notes Steps" width="800" />
 
 ---
 
