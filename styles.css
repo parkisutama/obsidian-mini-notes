@@ -14,16 +14,16 @@
     --pastel-gray: #E5E5E5;
 }
 
-/* Dark theme vibrant colors */
+/* Dark theme colors - inspired by Google Keep's vibrant note design */
 .theme-dark {
-    --pastel-pink: #FF6B9D;
-    --pastel-peach: #FF8A65;
-    --pastel-yellow: #FFD54F;
-    --pastel-green: #4DB6AC;
-    --pastel-blue: #64B5F6;
-    --pastel-purple: #BA68C8;
-    --pastel-magenta: #F06292;
-    --pastel-gray: #90A4AE;
+    --pastel-pink: #77172E;
+    --pastel-peach: #692B17;
+    --pastel-yellow: #7C4A03;
+    --pastel-green: #0C472F;
+    --pastel-blue: #1E3A5F;
+    --pastel-purple: #472E5B;
+    --pastel-magenta: #5B2245;
+    --pastel-gray: #3C3F43;
 }
 
 /* Main container */
@@ -443,22 +443,25 @@
     -webkit-box-orient: vertical;
 }
 
-/* White text for colored cards in dark theme */
+/* Google Keep-inspired text styling for colored cards in dark theme */
 .theme-dark .dashboard-card[style*="background-color"] .card-title {
-    color: #FFFFFF;
+    color: #E8EAED;
+    font-weight: 500;
 }
 
 .theme-dark .dashboard-card[style*="background-color"] .card-preview {
-    color: #FFFFFF;
+    color: #E8EAED;
+    opacity: 0.9;
 }
 
 .theme-dark .dashboard-card[style*="background-color"] .card-date {
-    color: rgba(255, 255, 255, 0.85);
+    color: rgba(232, 234, 237, 0.7);
 }
 
 .theme-dark .dashboard-card[style*="background-color"] .card-tag {
-    color: #FFFFFF;
-    background: rgba(255, 255, 255, 0.2);
+    color: #E8EAED;
+    background: rgba(232, 234, 237, 0.15);
+    border: 1px solid rgba(232, 234, 237, 0.2);
 }
 
 /* ============================================
