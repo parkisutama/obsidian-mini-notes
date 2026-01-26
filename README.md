@@ -2,17 +2,32 @@
 
 Quickly jot down notes during your focus sessions without worrying about organization. Review them later in a colorful masonry view where you can pin, tag, and arrange what matters.
 
-Avalible for both **Light Theme**
+- view your notes in a google keep-notes similar layout
+- change the bg color of your notes!
+- tag your most important notes
+- filter your notes based on their tags!
+
+[![GitHub stars](https://img.shields.io/github/stars/rknastenka/mini-notes?style=flat-square&logo=github&color=blue)](https://github.com/rknastenka/mini-notes)
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-Support%20me-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/rknastenka)
+
+**Light Theme**
 
 ![Masonry View](src/imgs/light-theme.png)
 
-And **Dark Theme**
+**Dark Theme**
 
 ![Masonry View](src/imgs/dark-theme.png)
 
 ### **IOS & Android Mobile Support**
 
 <img src="src/imgs/android.jpeg" alt="Android View" style="max-height: 500px;" />
+
+---
+
+### 
+**Coloring Notes:**  Hover on a note >> select the color you want.
+
+<img src="src/imgs/coloring.png" alt="Android View" style="max-width: 900px;" />
 
 ---
 
@@ -42,6 +57,11 @@ And **Dark Theme**
   - Maximum notes to display (default: 150)
   - Theme color preferences
 
+Don't forget to give it a ⭐ on [GitHub](https://github.com/rknastenka/mini-notes) to help others discover it!
+
 ---
 
-If you find this plugin helpful, consider giving it a ⭐ on GitHub!
+If you find Mini Notes helpful, please consider supporting my work!
+
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-Support%20me-FF5E5B?logo=ko-fi&logoColor=white&style=for-the-badge)](https://ko-fi.com/rknastenka)
+[![PayPal](https://img.shields.io/badge/PayPal-Donate-00457C?logo=paypal&logoColor=white&style=for-the-badge)](https://paypal.me/BanaTawalbeh)
