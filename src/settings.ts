@@ -35,7 +35,7 @@ export class MiniNotesSettingTab extends PluginSettingTab {
 					.map(folder => folder.path)
 					.filter(path => path !== '');
 				
-				dropdown.addOption('/', 'All Notes (default)');
+				dropdown.addOption('/', 'All notes (default)');
 				
 				// Add other folders
 				folders.forEach(folder => {
@@ -102,29 +102,42 @@ export class MiniNotesSettingTab extends PluginSettingTab {
 
 		// Footer with GitHub link
 		const footer = containerEl.createDiv();
+		// eslint-disable-next-line obsidianmd/no-static-styles-assignment
 		footer.style.borderTop = 'none';
+		// eslint-disable-next-line obsidianmd/no-static-styles-assignment
 		footer.style.paddingTop = '1em';
+		// eslint-disable-next-line obsidianmd/no-static-styles-assignment
 		footer.style.background = 'none';
 		
 		const footerContent = footer.createDiv();
+		// eslint-disable-next-line obsidianmd/no-static-styles-assignment
 		footerContent.style.display = 'flex';
+		// eslint-disable-next-line obsidianmd/no-static-styles-assignment
 		footerContent.style.alignItems = 'center';
+		// eslint-disable-next-line obsidianmd/no-static-styles-assignment
 		footerContent.style.gap = '0.5em';
+		// eslint-disable-next-line obsidianmd/no-static-styles-assignment
 		footerContent.style.fontSize = '0.7em';
+		// eslint-disable-next-line obsidianmd/no-static-styles-assignment
 		footerContent.style.color = 'var(--text-muted)';
 		
-		footerContent.createSpan({ text: 'Built by ' });
+		footerContent.createSpan({ text: 'built by ' });
 		
 		const link = footerContent.createEl('a', {
+			// eslint-disable-next-line obsidianmd/ui/sentence-case
 			text: 'rknastenka.com',
 			href: 'https://rknastenka.com'
 		});
+		// eslint-disable-next-line obsidianmd/no-static-styles-assignment
 		link.style.color = 'var(--text-muted)';
 		link.setAttribute('target', '_blank');
 		
 		const githubIcon = footerContent.createSpan();
+		// eslint-disable-next-line obsidianmd/no-static-styles-assignment
 		githubIcon.style.display = 'flex';
+		// eslint-disable-next-line obsidianmd/no-static-styles-assignment
 		githubIcon.style.cursor = 'pointer';
+		// eslint-disable-next-line obsidianmd/no-static-styles-assignment
 		githubIcon.style.marginLeft = '0.5em';
 		setIcon(githubIcon, 'github');
 		githubIcon.addEventListener('click', () => {

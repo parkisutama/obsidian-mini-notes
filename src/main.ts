@@ -29,7 +29,6 @@ export default class VisualDashboardPlugin extends Plugin {
 		this.addCommand({
 			id: 'open-visual-dashboard',
 			name: 'Open view',
-			hotkeys: [{ modifiers: ['Ctrl'], key: ']' }],
 			callback: async () => {
 				await this.activateView();
 			}
@@ -39,7 +38,6 @@ export default class VisualDashboardPlugin extends Plugin {
 		this.addCommand({
 			id: 'create-mini-note',
 			name: 'Create new mini note',
-			hotkeys: [{ modifiers: ['Ctrl'], key: '[' }],
 			callback: async () => {
 				await this.createMiniNote();
 			}
@@ -118,7 +116,7 @@ export default class VisualDashboardPlugin extends Plugin {
 			
 			if (!folder) {
 				await this.app.vault.createFolder(folderPath);
-				new Notice('Mini Notes folder created');
+				new Notice('Mini notes folder created');
 			}
 		} catch (error) {
 			console.error('Error creating Mini Notes folder:', error);

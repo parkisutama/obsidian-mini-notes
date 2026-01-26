@@ -32,7 +32,7 @@ export class VisualDashboardView extends ItemView {
 	}
 
 	getDisplayText(): string {
-		return 'Mini Notes';
+		return 'Mini notes';
 	}
 
 	getIcon(): string {
@@ -240,8 +240,8 @@ export class VisualDashboardView extends ItemView {
 				files = files.filter((file: TFile) => file.path.startsWith(sourceFolder));
 			}
 			
-		// Filter out .obsidian folder files to avoid reading plugin/config files
-		files = files.filter((file: TFile) => !file.path.startsWith('.obsidian/'));
+		// Filter out config folder files to avoid reading plugin/config files
+		files = files.filter((file: TFile) => !file.path.startsWith(this.app.vault.configDir + '/'));
 		
 		files = files
 			.sort((a: TFile, b: TFile) => b.stat.mtime - a.stat.mtime)
@@ -347,7 +347,7 @@ export class VisualDashboardView extends ItemView {
 			const errorText = errorMsg.createEl('p');
 			errorText.createSpan({ text: 'Failed to render cards. Please open the console (Ctrl+Shift+I), screenshot the error, and ' });
 			const link = errorText.createEl('a', { 
-				text: 'report it on GitHub',
+			text: 'Report it on GitHub',
 				href: 'https://github.com/rknastenka/mini-notes/issues'
 			});
 			link.setAttribute('target', '_blank');
@@ -397,6 +397,7 @@ export class VisualDashboardView extends ItemView {
 
 		// Apply max height limit
 		card.style.maxHeight = `${MAX_CARD_HEIGHT}px`;
+		// eslint-disable-next-line obsidianmd/no-static-styles-assignment
 		card.style.overflow = 'hidden';
 
 		// Pin button (shows on hover)
@@ -449,6 +450,7 @@ export class VisualDashboardView extends ItemView {
 				void (async () => {
 					if (index === pastelColors.length - 1) {
 						// Remove color
+						// eslint-disable-next-line obsidianmd/no-static-styles-assignment
 						card.style.backgroundColor = '';
 						delete this.plugin.data.noteColors[file.path];
 					} else {
