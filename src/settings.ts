@@ -28,7 +28,7 @@ export class MiniNotesSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('Source folder')
-			.setDesc('Folder to fetch notes from (type "/" to load all notes, default is "Mini Notes")')
+			.setDesc('Folder to fetch notes from (default is "/" for all notes in vault)')
 			.addDropdown(dropdown => {
 				// Get all folders in vault
 				const folders = this.app.vault.getAllLoadedFiles()
@@ -36,13 +36,11 @@ export class MiniNotesSettingTab extends PluginSettingTab {
 					.map(folder => folder.path)
 					.filter(path => path !== '');
 				
-				dropdown.addOption('Mini Notes', 'Mini Notes (default)');
+				dropdown.addOption('/', 'All Notes (default)');
 				
 				// Add other folders
 				folders.forEach(folder => {
-					if (folder !== 'Mini Notes') {
-						dropdown.addOption(folder, folder);
-					}
+					dropdown.addOption(folder, folder);
 				});
 				
 				dropdown.setValue(this.plugin.data.sourceFolder);

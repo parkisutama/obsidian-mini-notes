@@ -9,8 +9,6 @@ export default class VisualDashboardPlugin extends Plugin {
 	async onload() {
 		try {
 			await this.loadPluginData();
-
-			// Ensure Mini Notes folder exists
 			await this.ensureMiniNotesFolder();
 
 			// Register the custom icon
@@ -129,9 +127,13 @@ export default class VisualDashboardPlugin extends Plugin {
 
 	async createMiniNote() {
 		try {
-			// Ensure folder exists
-			await this.ensureMiniNotesFolder();
+			// Always create notes in Mini Notes folder
 			const folderPath = normalizePath('Mini Notes');
+			
+			// Ensure folder exists
+			if (!this.app.vault.getAbstractFileByPath(folderPath)) {
+				await this.app.vault.createFolder(folderPath);
+			}
 			
 			// Generate filename with date only
 			const now = new Date();
@@ -166,9 +168,6 @@ export default class VisualDashboardPlugin extends Plugin {
 	async activateView() {
 		try {
 			const { workspace } = this.app;
-
-			// Ensure folder exists when opening the view
-			await this.ensureMiniNotesFolder();
 
 			let leaf: WorkspaceLeaf | null = null;
 			const leaves = workspace.getLeavesOfType(VIEW_TYPE_VISUAL_DASHBOARD);
