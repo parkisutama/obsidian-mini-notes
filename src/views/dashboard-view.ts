@@ -339,7 +339,14 @@ export class VisualDashboardView extends ItemView {
 		} catch (error) {
 			console.error('Error rendering cards:', error);
 			const errorMsg = this.miniNotesGrid.createDiv({ cls: 'dashboard-error' });
-			errorMsg.createEl('p', { text: 'Failed to render cards. Check console for details.' });
+			const errorText = errorMsg.createEl('p');
+			errorText.createSpan({ text: 'Failed to render cards. Please open the console (Ctrl+Shift+I), screenshot the error, and ' });
+			const link = errorText.createEl('a', { 
+				text: 'report it on GitHub',
+				href: 'https://github.com/rknastenka/mini-notes/issues'
+			});
+			link.setAttribute('target', '_blank');
+			errorText.createSpan({ text: '.' });
 		}
 	}
 
