@@ -309,7 +309,7 @@ export class VisualDashboardView extends ItemView {
 				const pinnedGrid = this.miniNotesGrid.createDiv({ cls: 'mini-notes-grid-section' });
 				for (const file of pinnedFiles) {
 					const card = await this.createCard(file, globalIndex++);
-					pinnedGrid.appendChild(card);
+					if (card) pinnedGrid.appendChild(card);
 				}
 			}
 
@@ -321,7 +321,7 @@ export class VisualDashboardView extends ItemView {
 				const notesGrid = this.miniNotesGrid.createDiv({ cls: 'mini-notes-grid-section' });
 				for (const file of unpinnedFiles) {
 					const card = await this.createCard(file, globalIndex++);
-					notesGrid.appendChild(card);
+					if (card) notesGrid.appendChild(card);
 				}
 			}
 		} else {
@@ -329,7 +329,7 @@ export class VisualDashboardView extends ItemView {
 			const singleGrid = this.miniNotesGrid.createDiv({ cls: 'mini-notes-grid-section' });
 			for (const file of [...pinnedFiles, ...unpinnedFiles]) {
 				const card = await this.createCard(file, globalIndex++);
-				singleGrid.appendChild(card);
+				if (card) singleGrid.appendChild(card);
 			}
 		}
 		} catch (error) {
@@ -339,7 +339,7 @@ export class VisualDashboardView extends ItemView {
 		}
 	}
 
-	async createCard(file: TFile, index: number): Promise<HTMLElement> {
+	async createCard(file: TFile, index: number): Promise<HTMLElement | null> {
 		const card = document.createElement('div');
 		card.addClass('dashboard-card');
 		card.setAttribute('data-path', file.path);
@@ -519,10 +519,9 @@ export class VisualDashboardView extends ItemView {
 		card.addEventListener('dragleave', (e: DragEvent) => this.handleDragLeave(e, card));
 		card.addEventListener('drop', (e: DragEvent) => void this.handleDrop(e, card));
 		} catch (error) {
-			console.error(`Error creating card for ${file.path}:`, error);
-			// Create fallback card with error message
-			const errorContent = card.createDiv({ cls: 'card-error' });
-			errorContent.createEl('p', { text: 'Error loading note' });
+			console.warn(`Skipping card for ${file.path} due to error:`, error);
+			// Return null to skip this card entirely
+			return null;
 		}
 
 		return card;
