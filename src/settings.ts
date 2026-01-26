@@ -102,6 +102,7 @@ export class MiniNotesSettingTab extends PluginSettingTab {
 
 		// Footer with GitHub link
 		const footer = containerEl.createDiv();
+		// Required for proper footer spacing and layout - CSS classes not available for settings footer
 		// eslint-disable-next-line obsidianmd/no-static-styles-assignment
 		footer.style.borderTop = 'none';
 		// eslint-disable-next-line obsidianmd/no-static-styles-assignment
@@ -110,6 +111,7 @@ export class MiniNotesSettingTab extends PluginSettingTab {
 		footer.style.background = 'none';
 		
 		const footerContent = footer.createDiv();
+		// Required for proper footer content layout - CSS classes not available for settings footer
 		// eslint-disable-next-line obsidianmd/no-static-styles-assignment
 		footerContent.style.display = 'flex';
 		// eslint-disable-next-line obsidianmd/no-static-styles-assignment
@@ -121,18 +123,19 @@ export class MiniNotesSettingTab extends PluginSettingTab {
 		// eslint-disable-next-line obsidianmd/no-static-styles-assignment
 		footerContent.style.color = 'var(--text-muted)';
 		
-		footerContent.createSpan({ text: 'built by ' });
+		footerContent.createSpan({ text: 'Built by ' });
 		
 		const link = footerContent.createEl('a', {
-			// eslint-disable-next-line obsidianmd/ui/sentence-case
-			text: 'rknastenka.com',
+			text: 'Rknastenka.com',
 			href: 'https://rknastenka.com'
 		});
+		// Required to match footer text color - CSS classes not available for settings footer links
 		// eslint-disable-next-line obsidianmd/no-static-styles-assignment
 		link.style.color = 'var(--text-muted)';
 		link.setAttribute('target', '_blank');
 		
 		const githubIcon = footerContent.createSpan();
+		// Required for proper icon display and interaction - CSS classes not available for settings footer icons
 		// eslint-disable-next-line obsidianmd/no-static-styles-assignment
 		githubIcon.style.display = 'flex';
 		// eslint-disable-next-line obsidianmd/no-static-styles-assignment

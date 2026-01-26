@@ -4,7 +4,7 @@ Quickly jot down notes during your focus sessions without worrying about organiz
 
 - view your notes in a google keep-notes similar layout
 - change the bg color of your notes!
-- tag your most important notes
+- pin your most important notes
 - filter your notes based on their tags!
 
 [![GitHub stars](https://img.shields.io/github/stars/rknastenka/mini-notes?style=flat-square&logo=github&color=blue)](https://github.com/rknastenka/mini-notes)

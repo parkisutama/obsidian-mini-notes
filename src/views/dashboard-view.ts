@@ -172,7 +172,7 @@ export class VisualDashboardView extends ItemView {
 		await this.renderCards();
 	}
 
-	private async populateTagDropdown(dropdown: HTMLElement, tagIcon: HTMLElement) {
+	private populateTagDropdown(dropdown: HTMLElement, tagIcon: HTMLElement) {
 		this.renderTagDropdownItems(dropdown, tagIcon);
 	}
 
@@ -397,6 +397,7 @@ export class VisualDashboardView extends ItemView {
 
 		// Apply max height limit
 		card.style.maxHeight = `${MAX_CARD_HEIGHT}px`;
+		// Required to prevent card content from exceeding max height - dynamic styling needed per card
 		// eslint-disable-next-line obsidianmd/no-static-styles-assignment
 		card.style.overflow = 'hidden';
 
@@ -449,7 +450,7 @@ export class VisualDashboardView extends ItemView {
 				
 				void (async () => {
 					if (index === pastelColors.length - 1) {
-						// Remove color
+						// Remove color - required to reset dynamically applied background color
 						// eslint-disable-next-line obsidianmd/no-static-styles-assignment
 						card.style.backgroundColor = '';
 						delete this.plugin.data.noteColors[file.path];
@@ -588,7 +589,7 @@ export class VisualDashboardView extends ItemView {
 		card.classList.remove('drag-over');
 	}
 
-	async handleDrop(e: DragEvent, targetCard: HTMLElement) {
+	handleDrop(e: DragEvent, targetCard: HTMLElement) {
 		e.preventDefault();
 		targetCard.classList.remove('drag-over');
 
@@ -616,11 +617,7 @@ export class VisualDashboardView extends ItemView {
 		void this.plugin.updateOrder(currentOrder).then(() => this.renderCards());
 	}
 
-	async onClose() {
-		if (this.refreshTimeoutId !== null) {
-			window.clearTimeout(this.refreshTimeoutId);
-			this.refreshTimeoutId = null;
-		}
+async onClose() {
 		
 		// Event cleanup handled automatically by registerEvent
 		this.contentEl.empty();
