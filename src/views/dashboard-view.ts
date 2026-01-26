@@ -29,7 +29,7 @@ export class VisualDashboardView extends ItemView {
 	}
 
 	getDisplayText(): string {
-		return this.plugin.data.viewTitle || 'Do Your Best Today!';
+		return 'Mini Notes';
 	}
 
 	getIcon(): string {
