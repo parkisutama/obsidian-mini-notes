@@ -235,15 +235,25 @@ export class VisualDashboardView extends ItemView {
 				files = files.filter((file: TFile) => file.path.startsWith(sourceFolder));
 			}
 			
-			files = files
-				.sort((a: TFile, b: TFile) => b.stat.mtime - a.stat.mtime)
-				.slice(0, this.plugin.data.maxNotes * 3); // Get more initially for filtering
+		// Filter out .obsidian folder files to avoid reading plugin/config files
+		files = files.filter((file: TFile) => !file.path.startsWith('.obsidian/'));
+		
+		files = files
+			.sort((a: TFile, b: TFile) => b.stat.mtime - a.stat.mtime)
+			.slice(0, this.plugin.data.maxNotes * 3); // Get more initially for filtering
 
-			// Pre-load content for tag filtering
-			const fileContents = new Map<string, string>();
-			for (const file of files) {
-				fileContents.set(file.path, await this.app.vault.cachedRead(file));
+		// Pre-load content for tag filtering with error handling
+		const fileContents = new Map<string, string>();
+		for (const file of files) {
+			try {
+				const content = await this.app.vault.cachedRead(file);
+				fileContents.set(file.path, content);
+			} catch (error) {
+				console.warn(`Failed to read file ${file.path}:`, error);
+				// Skip files that can't be read
+				fileContents.set(file.path, '');
 			}
+		}
 
 		// Apply pinned filter
 		if (this.filterPinned === 'pinned') {
