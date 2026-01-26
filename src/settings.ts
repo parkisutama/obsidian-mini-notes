@@ -22,8 +22,11 @@ export class MiniNotesSettingTab extends PluginSettingTab {
 				.onChange(async (value) => {
 					this.plugin.data.viewTitle = value || 'Do Your Best Today!';
 					await this.plugin.savePluginData();
-					// Trigger custom event to update views
-				this.app.workspace.trigger('mini-notes:settings-changed');
+				})
+			);
+
+		new Setting(containerEl)
+			.setName('Source folder')
 			.setDesc('Folder to fetch notes from (default is "/" for all notes in vault)')
 			.addDropdown(dropdown => {
 				// Get all folders in vault
@@ -58,8 +61,11 @@ export class MiniNotesSettingTab extends PluginSettingTab {
 					if (!isNaN(num) && num > 0) {
 						this.plugin.data.maxNotes = num;
 						await this.plugin.savePluginData();
-						// Trigger custom event to update views
-					this.app.workspace.trigger('mini-notes:settings-changed');
+					}
+				})
+			);
+
+		new Setting(containerEl)
 			.setName('Theme color')
 			.setDesc('Color for borders, pins, and accents')
 			.addDropdown(dropdown => {
@@ -70,7 +76,7 @@ export class MiniNotesSettingTab extends PluginSettingTab {
 				dropdown.onChange(async (value) => {
 					this.plugin.data.themeColor = value as 'obsidian' | 'black' | 'custom';
 					await this.plugin.savePluginData();
-				this.app.workspace.trigger('mini-notes:settings-changed');
+					this.app.workspace.trigger('mini-notes:settings-changed');
 					// Show/hide custom color picker
 					const colorSetting = containerEl.querySelector('.custom-color-setting') as HTMLElement;
 					if (colorSetting) {
@@ -124,5 +130,10 @@ export class MiniNotesSettingTab extends PluginSettingTab {
 		githubIcon.addEventListener('click', () => {
 			window.open('https://github.com/rknastenka/mini-notes', '_blank');
 		});
+	}
+
+	hide(): void {
+		// Trigger refresh when settings are closed
+		this.app.workspace.trigger('mini-notes:settings-changed');
 	}
 }

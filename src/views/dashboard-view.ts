@@ -12,6 +12,7 @@ export class VisualDashboardView extends ItemView {
 	private currentFiles: TFile[] = [];
 	private settingsChangedHandler: () => void;
 	private refreshTimeoutId: number | null = null;
+	private eventsRegistered = false;
 
 	// Filter state
 	private filterPinned: 'all' | 'pinned' | 'unpinned' = 'all';
@@ -22,7 +23,7 @@ export class VisualDashboardView extends ItemView {
 		super(leaf);
 		this.plugin = plugin;
 		this.settingsChangedHandler = () => {
-			void this.onOpen();
+			void this.refreshView();
 		};
 	}
 
@@ -131,8 +132,17 @@ export class VisualDashboardView extends ItemView {
 		// Render the cards
 		await this.renderCards();
 
+		// Register event listeners only once
+		if (!this.eventsRegistered) {
+			this.setupEventListeners();
+			this.eventsRegistered = true;
+		}
+	}
+
+	private setupEventListeners() {
 		// Listen for settings changes using workspace event
 		this.registerEvent(
+			// @ts-ignore - Custom event type
 			this.app.workspace.on('mini-notes:settings-changed', this.settingsChangedHandler)
 		);
 
@@ -146,6 +156,20 @@ export class VisualDashboardView extends ItemView {
 		this.registerEvent(
 			this.app.vault.on('delete', () => this.debouncedRefresh())
 		);
+	}
+
+	private async refreshView() {
+		// Update theme color
+		this.applyThemeColor();
+		
+		// Update view title
+		const titleElement = this.contentEl.querySelector('.dashboard-title') as HTMLElement;
+		if (titleElement) {
+			titleElement.textContent = this.plugin.data.viewTitle || 'Do Your Best Today!';
+		}
+		
+		// Re-render cards to reflect setting changes
+		await this.renderCards();
 	}
 
 	private async populateTagDropdown(dropdown: HTMLElement, tagIcon: HTMLElement) {
