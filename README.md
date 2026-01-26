@@ -10,6 +10,12 @@ And **Dark Theme**
 
 ![Masonry View](src/imgs/dark-theme.png)
 
+### **IOS & Android Mobile Support**
+
+<img src="src/imgs/android.jpeg" alt="Android View" style="max-height: 500px;" />
+
+---
+
 ### Creating a New Mini Note
 - Press `Ctrl + [` (default hotkey), or
 - Use the command palette and search for "Mini Notes: Create new mini note"
@@ -19,6 +25,7 @@ And **Dark Theme**
 - Press `Ctrl + ]` (default hotkey), or
 - Click the grid icon in the left ribbon, or
 - Use the command palette `(Ctrl/Cmd + P)` and search for "Mini Notes: Open view"
+- The view will intially load all notes (change the Source folder later on from the settings)
 
 ### Working with Notes
 - Click any card to open the note in the editor
