@@ -1,4 +1,4 @@
-import { App, PluginSettingTab, Setting } from 'obsidian';
+import { App, PluginSettingTab, Setting, setIcon } from 'obsidian';
 import type VisualDashboardPlugin from './main';
 
 export class MiniNotesSettingTab extends PluginSettingTab {
@@ -101,5 +101,36 @@ export class MiniNotesSettingTab extends PluginSettingTab {
 		// Set initial visibility of custom color setting
 		customColorSetting.settingEl.addClass('custom-color-setting');
 		customColorSetting.settingEl.style.display = this.plugin.data.themeColor === 'custom' ? 'flex' : 'none';
+
+		// Footer with GitHub link
+		const footer = containerEl.createDiv();
+		footer.style.borderTop = 'none';
+		footer.style.paddingTop = '1em';
+		footer.style.background = 'none';
+		
+		const footerContent = footer.createDiv();
+		footerContent.style.display = 'flex';
+		footerContent.style.alignItems = 'center';
+		footerContent.style.gap = '0.5em';
+		footerContent.style.fontSize = '0.7em';
+		footerContent.style.color = 'var(--text-muted)';
+		
+		footerContent.createSpan({ text: 'Built by ' });
+		
+		const link = footerContent.createEl('a', {
+			text: 'rknastenka.com',
+			href: 'https://rknastenka.com'
+		});
+		link.style.color = 'var(--text-muted)';
+		link.setAttribute('target', '_blank');
+		
+		const githubIcon = footerContent.createSpan();
+		githubIcon.style.display = 'flex';
+		githubIcon.style.cursor = 'pointer';
+		githubIcon.style.marginLeft = '0.5em';
+		setIcon(githubIcon, 'github');
+		githubIcon.addEventListener('click', () => {
+			window.open('https://github.com/rknastenka/mini-notes', '_blank');
+		});
 	}
 }
