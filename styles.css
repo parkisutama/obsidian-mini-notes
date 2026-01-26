@@ -253,6 +253,8 @@
     width: 100%;
     break-inside: avoid;
     margin-bottom: 12px;
+    max-height: 600px;
+    overflow: hidden;
 }
 
 .dashboard-card:hover {

@@ -3,6 +3,7 @@ import type VisualDashboardPlugin from '../main';
 import { VIEW_TYPE_VISUAL_DASHBOARD } from '../types';
 import { extractTags, getPreviewText, stripMarkdown } from '../utils/markdown';
 import { formatDate } from '../utils/date';
+import { FILE_FETCH_MULTIPLIER, DEBOUNCE_REFRESH_MS, MAX_PREVIEW_LENGTH, CARD_SIZE, MAX_CARD_HEIGHT } from '../constants';
 
 export class VisualDashboardView extends ItemView {
 	private miniNotesGrid!: HTMLElement;
@@ -152,7 +153,7 @@ export class VisualDashboardView extends ItemView {
 		}
 
 		try {
-			const files = this.app.vault.getMarkdownFiles().slice(0, this.plugin.data.maxNotes * 3);
+			const files = this.app.vault.getMarkdownFiles().slice(0, this.plugin.data.maxNotes * FILE_FETCH_MULTIPLIER);
 			const tagSet = new Set<string>();
 
 			for (const file of files) {
@@ -196,7 +197,7 @@ export class VisualDashboardView extends ItemView {
 		this.registerInterval(
 			window.setTimeout(() => {
 				void this.renderCards();
-			}, 1000)
+			}, DEBOUNCE_REFRESH_MS)
 		);
 	}
 
@@ -240,7 +241,7 @@ export class VisualDashboardView extends ItemView {
 		
 		files = files
 			.sort((a: TFile, b: TFile) => b.stat.mtime - a.stat.mtime)
-			.slice(0, this.plugin.data.maxNotes * 3); // Get more initially for filtering
+			.slice(0, this.plugin.data.maxNotes * FILE_FETCH_MULTIPLIER); // Get more initially for filtering
 
 		// Pre-load content for tag filtering with error handling
 		const fileContents = new Map<string, string>();
@@ -350,18 +351,18 @@ export class VisualDashboardView extends ItemView {
 			// Get content and preview
 			const content = await this.app.vault.cachedRead(file);
 		const cleanContent = stripMarkdown(content);
-		const previewLength = Math.min(cleanContent.length, 800);
+		const previewLength = Math.min(cleanContent.length, MAX_PREVIEW_LENGTH);
 		const previewText = getPreviewText(content, previewLength);
 
 		// Dynamic sizing based on content length - more granular
 		const contentLen = cleanContent.length;
-		if (contentLen > 800) {
+		if (contentLen > CARD_SIZE.XL) {
 			card.addClass('card-xl');
-		} else if (contentLen > 500) {
+		} else if (contentLen > CARD_SIZE.LARGE) {
 			card.addClass('card-large');
-		} else if (contentLen > 250) {
+		} else if (contentLen > CARD_SIZE.MEDIUM) {
 			card.addClass('card-medium');
-		} else if (contentLen > 100) {
+		} else if (contentLen > CARD_SIZE.SMALL) {
 			card.addClass('card-small');
 		} else {
 			card.addClass('card-xs');
@@ -378,6 +379,10 @@ export class VisualDashboardView extends ItemView {
 		if (savedColor) {
 			card.style.backgroundColor = savedColor;
 		}
+
+		// Apply max height limit
+		card.style.maxHeight = `${MAX_CARD_HEIGHT}px`;
+		card.style.overflow = 'hidden';
 
 		// Pin button (shows on hover)
 		const pinBtn = card.createDiv({ cls: 'card-pin-btn' + (isPinned ? ' pinned' : '') });
