@@ -2,8 +2,13 @@
 
 Quickly jot down notes during your focus sessions without worrying about organization. Review them later in a colorful masonry view where you can pin, tag, and arrange what matters.
 
+Avalible for both **Light Theme**
 
-![Masonry View](src/imgs/view.png)
+![Masonry View](src/imgs/light-theme.png)
+
+And **Dark Theme**
+
+![Masonry View](src/imgs/dark-theme.png)
 
 ### Creating a New Mini Note
 - Press `Ctrl + [` (default hotkey), or
