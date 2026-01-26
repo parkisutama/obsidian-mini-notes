@@ -11,6 +11,7 @@ export class VisualDashboardView extends ItemView {
 	private draggedCard: HTMLElement | null = null;
 	private currentFiles: TFile[] = [];
 	private settingsChangedHandler: () => void;
+	private refreshTimeoutId: number | null = null;
 
 	// Filter state
 	private filterPinned: 'all' | 'pinned' | 'unpinned' = 'all';
@@ -193,12 +194,14 @@ export class VisualDashboardView extends ItemView {
 	}
 
 	private debouncedRefresh() {
-		// Use registerInterval for proper cleanup
-		this.registerInterval(
-			window.setTimeout(() => {
-				void this.renderCards();
-			}, DEBOUNCE_REFRESH_MS)
-		);
+		if (this.refreshTimeoutId !== null) {
+			window.clearTimeout(this.refreshTimeoutId);
+		}
+		
+		this.refreshTimeoutId = window.setTimeout(() => {
+			void this.renderCards();
+			this.refreshTimeoutId = null;
+		}, DEBOUNCE_REFRESH_MS);
 	}
 
 	private applyThemeColor() {
@@ -600,9 +603,12 @@ export class VisualDashboardView extends ItemView {
 	}
 
 	async onClose() {
-		// Remove custom event listener
+		if (this.refreshTimeoutId !== null) {
+			window.clearTimeout(this.refreshTimeoutId);
+			this.refreshTimeoutId = null;
+		}
+		
 		window.removeEventListener('mini-notes:settings-changed', this.settingsChangedHandler);
-		// Clean up is handled automatically by registerInterval
 		this.contentEl.empty();
 	}
 }
