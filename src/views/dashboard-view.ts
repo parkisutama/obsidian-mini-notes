@@ -147,32 +147,7 @@ export class VisualDashboardView extends ItemView {
 	}
 
 	private async populateTagDropdown(dropdown: HTMLElement, tagIcon: HTMLElement) {
-		if (this.allTags.length > 0) {
-			// Tags already loaded, just render them
-			this.renderTagDropdownItems(dropdown, tagIcon);
-			return;
-		}
-
-		try {
-			const files = this.app.vault.getMarkdownFiles().slice(0, this.plugin.data.maxNotes * FILE_FETCH_MULTIPLIER);
-			const tagSet = new Set<string>();
-
-			for (const file of files) {
-				try {
-					const content = await this.app.vault.cachedRead(file);
-					const tags = extractTags(content);
-					tags.forEach(tag => tagSet.add(tag));
-				} catch {
-					// Skip files that can't be read
-					console.warn(`Could not read file for tags: ${file.path}`);
-				}
-			}
-
-			this.allTags = Array.from(tagSet).sort();
-			this.renderTagDropdownItems(dropdown, tagIcon);
-		} catch (error) {
-			console.error('Error populating tag dropdown:', error);
-		}
+		this.renderTagDropdownItems(dropdown, tagIcon);
 	}
 
 	private renderTagDropdownItems(dropdown: HTMLElement, tagIcon: HTMLElement) {
@@ -248,16 +223,20 @@ export class VisualDashboardView extends ItemView {
 
 		// Pre-load content for tag filtering with error handling
 		const fileContents = new Map<string, string>();
+		const tagSet = new Set<string>();
 		for (const file of files) {
 			try {
 				const content = await this.app.vault.cachedRead(file);
 				fileContents.set(file.path, content);
+				const tags = extractTags(content);
+				tags.forEach(tag => tagSet.add(tag));
 			} catch (error) {
 				console.warn(`Failed to read file ${file.path}:`, error);
-				// Skip files that can't be read
 				fileContents.set(file.path, '');
 			}
 		}
+
+		this.allTags = Array.from(tagSet).sort();
 
 		// Apply pinned filter
 		if (this.filterPinned === 'pinned') {
