@@ -1,14 +1,11 @@
 # Mini Notes
-
-Quickly jot down notes during your focus sessions without worrying about organization. Review them later in a colorful masonry view where you can pin, tag, and arrange what matters.
+Your quick thoughts, beautifully displayed, without worrying about organization.
+Review them later in a colorful a Google Keep-style colorful card-based view where you can pin, tag, and arrange what matters.
 
 - view your notes in a google keep-notes similar layout
 - change the bg color of your notes!
 - pin your most important notes
 - filter your notes based on their tags!
-
-[![GitHub stars](https://img.shields.io/github/stars/rknastenka/mini-notes?style=flat-square&logo=github&color=blue)](https://github.com/rknastenka/mini-notes)
-[![Ko-fi](https://img.shields.io/badge/Ko--fi-Support%20me-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/rknastenka)
 
 **Light Theme**
 
@@ -60,5 +57,5 @@ Don't forget to give it a ⭐ on [GitHub](https://github.com/rknastenka/mini-not
 
 If you find Mini Notes helpful, please consider supporting my work!
 
-[![Ko-fi](https://img.shields.io/badge/Ko--fi-Support%20me-FF5E5B?logo=ko-fi&logoColor=white&style=for-the-badge)](https://ko-fi.com/rknastenka)
-[![PayPal](https://img.shields.io/badge/PayPal-Donate-00457C?logo=paypal&logoColor=white&style=for-the-badge)](https://paypal.me/BanaTawalbeh)
+[![GitHub stars](https://img.shields.io/github/stars/rknastenka/mini-notes?style=flat-square&logo=github&color=blue)](https://github.com/rknastenka/mini-notes)
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-Support%20me-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/rknastenka)
