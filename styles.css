@@ -590,3 +590,335 @@
     outline: 2px solid var(--masonry-theme-color, var(--interactive-accent));
     opacity: 1;
 }
+
+/* ============================================
+   Quick Note Bar (Desktop)
+   ============================================ */
+
+.quick-note-container {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 33.333%;
+    min-width: 400px;
+    max-width: 600px;
+    z-index: 50;
+}
+
+.quick-note-bar {
+    background: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    cursor: text;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.2s ease;
+}
+
+.quick-note-bar:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    border-color: var(--background-modifier-border-hover);
+}
+
+.quick-note-placeholder {
+    flex: 1;
+    color: var(--text-muted);
+    font-size: 14px;
+    user-select: none;
+}
+
+.quick-note-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.quick-note-icon {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+    color: var(--text-muted);
+}
+
+.quick-note-icon:hover {
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
+}
+
+.quick-note-icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* Expanded state */
+.quick-note-bar.expanded {
+    flex-direction: column;
+    align-items: stretch;
+    cursor: default;
+    padding: 16px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
+}
+
+.quick-note-title {
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text-normal);
+    padding: 8px 0;
+    width: 100%;
+}
+
+.quick-note-title::placeholder {
+    color: var(--text-muted);
+}
+
+.quick-note-content {
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 14px;
+    color: var(--text-normal);
+    padding: 8px 0;
+    width: 100%;
+    resize: none;
+    min-height: 60px;
+    font-family: var(--font-text);
+    line-height: 1.5;
+}
+
+.quick-note-content::placeholder {
+    color: var(--text-muted);
+}
+
+.quick-note-actions-bar {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--background-modifier-border);
+}
+
+.quick-note-actions-left {
+    display: flex;
+    gap: 4px;
+}
+
+.quick-note-actions-right {
+    display: flex;
+    gap: 8px;
+}
+
+.quick-note-button {
+    background: transparent;
+    border: none;
+    padding: 6px 16px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    color: var(--text-normal);
+}
+
+.quick-note-button:hover {
+    background: var(--background-modifier-hover);
+}
+
+.quick-note-button-primary {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+}
+
+.quick-note-button-primary:hover {
+    background: var(--interactive-accent-hover);
+}
+
+/* Mobile-specific quick note bar styling */
+.quick-note-container.mobile {
+    position: fixed;
+    bottom: 100px; /* Position above Obsidian's mobile floating bar (~56px + more spacing) */
+    left: 12px;
+    right: 12px;
+    width: auto;
+    min-width: unset;
+    transform: none;
+    z-index: 50;
+}
+
+.quick-note-container.mobile .quick-note-bar {
+    border-radius: 28px; /* More rounded for mobile */
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.quick-note-container.mobile .quick-note-bar.expanded {
+    border-radius: 12px;
+}
+
+.quick-note-container.mobile .quick-note-placeholder {
+    font-size: 15px;
+}
+
+/* ============================================
+   Floating Plus Button (Mobile) - DEPRECATED
+   ============================================ */
+
+/* Keeping for backward compatibility but not used */
+.quick-note-floating-btn {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 56px;
+    height: 56px;
+    background: var(--interactive-accent);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    transition: all 0.3s ease;
+    z-index: 100;
+    color: var(--text-on-accent);
+}
+
+.quick-note-floating-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+}
+
+.quick-note-floating-btn:active {
+    transform: scale(0.95);
+}
+
+.quick-note-floating-btn svg {
+    width: 24px;
+    height: 24px;
+}
+
+/* ============================================
+   Quick Note Modal (Mobile)
+   ============================================ */
+
+.quick-note-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.quick-note-modal {
+    background: var(--background-primary);
+    border-radius: 16px 16px 0 0;
+    width: 100%;
+    max-width: 600px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+    }
+    to {
+        transform: translateY(0);
+    }
+}
+
+.quick-note-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.quick-note-modal-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-normal);
+}
+
+.quick-note-modal-close {
+    width: 32px;
+    height: 32px;
+}
+
+.quick-note-modal-body {
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.quick-note-modal-footer {
+    padding: 16px 20px;
+    border-top: 1px solid var(--background-modifier-border);
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* Mobile specific adjustments */
+@media (max-width: 768px) {
+    /* Desktop-style quick note bar on mobile is handled by .mobile class above */
+    .quick-note-container:not(.mobile) {
+        width: calc(100% - 32px);
+        min-width: unset;
+        left: 16px;
+        right: 16px;
+        transform: none;
+        bottom: 16px;
+    }
+
+    .quick-note-modal {
+        max-width: 100%;
+    }
+    
+    /* Deprecated - keeping for compatibility */
+    .quick-note-floating-btn {
+        bottom: 20px;
+        right: 20px;
+        width: 52px;
+        height: 52px;
+    }
+
+    /* Add padding to grid to prevent overlap with floating bar */
+    .visual-dashboard-container.mobile .mini-notes-grid {
+        padding-bottom: 160px;
+    }
+}
+
+/* Tablet adjustments */
+@media (min-width: 769px) and (max-width: 1200px) {
+    .quick-note-container:not(.mobile) {
+        width: 50%;
+        min-width: 400px;
+    }
+}

@@ -13,6 +13,7 @@ export interface DashboardData {
 	customThemeColor: string;
 	useObsidianDefault: boolean;
 	newNotesFolder: string;
+	openAfterCreate: boolean;
 }
 
 export const DEFAULT_DATA: DashboardData = {
@@ -25,5 +26,6 @@ export const DEFAULT_DATA: DashboardData = {
 	themeColor: 'obsidian',
 	customThemeColor: '#000000',
 	useObsidianDefault: true,
-	newNotesFolder: 'Mini Notes'
+	newNotesFolder: 'Mini Notes',
+	openAfterCreate: false
 };
