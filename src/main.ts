@@ -190,6 +190,102 @@ export default class VisualDashboardPlugin extends Plugin {
 		}
 	}
 
+	async createQuickNote(title: string, content: string) {
+		try {
+			let folderPath: string;
+
+			// Determine which folder to use
+			if (this.data.useObsidianDefault) {
+				// Use Obsidian's default folder setting
+				// @ts-expect-error: accessing internal Obsidian API
+				const defaultFolder = this.app.vault.getConfig('newFileLocation') as string;
+
+				// @ts-expect-error: accessing internal Obsidian API
+				const specifiedFolder = this.app.vault.getConfig('newFileFolderPath') as string;
+
+				if (defaultFolder === 'folder' && specifiedFolder) {
+					folderPath = normalizePath(specifiedFolder);
+				} else if (defaultFolder === 'current') {
+					// Use currently active file's folder
+					const activeFile = this.app.workspace.getActiveFile();
+					if (activeFile) {
+						folderPath = activeFile.parent?.path || '/';
+					} else {
+						folderPath = '/';
+					}
+				} else {
+					// Default to root
+					folderPath = '/';
+				}
+			} else {
+				// Use plugin's custom folder setting
+				folderPath = normalizePath(this.data.newNotesFolder);
+			}
+
+			// Ensure folder exists (skip if root folder)
+			if (folderPath !== '/' && !this.app.vault.getAbstractFileByPath(folderPath)) {
+				await this.app.vault.createFolder(folderPath);
+			}
+
+			// Generate filename
+			const now = new Date();
+			let fileName: string;
+
+			if (title) {
+				// Use title as filename (sanitize for filesystem)
+				const sanitizedTitle = title
+					.replace(/[\\/:*?"<>|]/g, '-') // Replace invalid chars
+					.replace(/\s+/g, ' ') // Normalize spaces
+					.trim()
+					.substring(0, 100); // Limit length
+				fileName = `${sanitizedTitle}.md`;
+			} else {
+				// Use date-time as filename
+				const date = now.toLocaleDateString('en-CA'); // YYYY-MM-DD format
+				const time = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }); // HH:MM format
+				fileName = `${date} ${time}.md`;
+			}
+
+			// Find available filename
+			let filePath = folderPath === '/' ? normalizePath(fileName) : normalizePath(`${folderPath}/${fileName}`);
+			let counter = 1;
+
+			while (this.app.vault.getAbstractFileByPath(filePath)) {
+				const baseName = fileName.replace('.md', '');
+				fileName = `${baseName} (${counter}).md`;
+				filePath = folderPath === '/' ? normalizePath(fileName) : normalizePath(`${folderPath}/${fileName}`);
+				counter++;
+			}
+
+			// Create file content
+			let fileContent = '';
+			if (title) {
+				fileContent += `# ${title}\n\n`;
+			}
+			if (content) {
+				fileContent += content;
+			}
+
+			// Create file
+			const file = await this.app.vault.create(filePath, fileContent);
+
+			new Notice('Quick note created');
+
+			// Open the file if setting is enabled
+			if (this.data.openAfterCreate) {
+				const leaf = this.app.workspace.getLeaf('tab');
+				await leaf.openFile(file);
+			}
+
+			// Trigger refresh if dashboard is open
+			// @ts-ignore - Custom event type
+			this.app.workspace.trigger('mini-notes:settings-changed');
+		} catch (error) {
+			console.error('Error creating quick note:', error);
+			throw error;
+		}
+	}
+
 	async activateView() {
 		try {
 			const { workspace } = this.app;

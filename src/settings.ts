@@ -118,6 +118,17 @@ export class MiniNotesSettingTab extends PluginSettingTab {
 		customFolderSetting.settingEl.style.display = this.plugin.data.useObsidianDefault ? 'none' : 'flex';
 
 		new Setting(containerEl)
+			.setName('Open note after creation')
+			.setDesc('Automatically open the note in a new tab after creating it from the quick note bar')
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.data.openAfterCreate)
+				.onChange(async (value) => {
+					this.plugin.data.openAfterCreate = value;
+					await this.plugin.savePluginData();
+				})
+			);
+
+		new Setting(containerEl)
 			.setName('Theme color')
 			.setDesc('Color for borders, pins, and accents')
 			.addDropdown(dropdown => {
