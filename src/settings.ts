@@ -34,14 +34,14 @@ export class MiniNotesSettingTab extends PluginSettingTab {
 					.filter(file => 'children' in file && file.children !== undefined)
 					.map(folder => folder.path)
 					.filter(path => path !== '');
-				
+
 				dropdown.addOption('/', 'All notes (default)');
-				
+
 				// Add other folders
 				folders.forEach(folder => {
 					dropdown.addOption(folder, folder);
 				});
-				
+
 				dropdown.setValue(this.plugin.data.sourceFolder);
 				dropdown.onChange(async (value) => {
 					this.plugin.data.sourceFolder = value;
@@ -64,6 +64,58 @@ export class MiniNotesSettingTab extends PluginSettingTab {
 					}
 				})
 			);
+
+		// New notes location settings
+		containerEl.createEl('h3', { text: 'New notes location' });
+
+		new Setting(containerEl)
+			.setName('Use Obsidian default folder')
+			.setDesc('Create new notes in the folder specified in Obsidian settings (Settings > Files & Links > Default location for new notes)')
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.data.useObsidianDefault)
+				.onChange(async (value) => {
+					this.plugin.data.useObsidianDefault = value;
+					await this.plugin.savePluginData();
+					// Show/hide custom folder setting
+					const folderSetting = containerEl.querySelector('.custom-folder-setting') as HTMLElement;
+					if (folderSetting) {
+						folderSetting.style.display = value ? 'none' : 'flex';
+					}
+				})
+			);
+
+		const customFolderSetting = new Setting(containerEl)
+			.setName('Custom folder for new notes')
+			.setDesc('Folder where new mini notes will be created')
+			.addDropdown(dropdown => {
+				// Get all folders in vault
+				const folders = this.app.vault.getAllLoadedFiles()
+					.filter(file => 'children' in file && file.children !== undefined)
+					.map(folder => folder.path);
+
+				// Add root folder option
+				dropdown.addOption('/', 'Root folder');
+
+				// Add other folders
+				folders.forEach(folder => {
+					if (folder !== '') {
+						dropdown.addOption(folder, folder);
+					}
+				});
+
+				// Add option to create new folder
+				dropdown.addOption('Mini Notes', 'Mini Notes');
+
+				dropdown.setValue(this.plugin.data.newNotesFolder);
+				dropdown.onChange(async (value) => {
+					this.plugin.data.newNotesFolder = value;
+					await this.plugin.savePluginData();
+				});
+			});
+
+		// Set initial visibility of custom folder setting
+		customFolderSetting.settingEl.addClass('custom-folder-setting');
+		customFolderSetting.settingEl.style.display = this.plugin.data.useObsidianDefault ? 'none' : 'flex';
 
 		new Setting(containerEl)
 			.setName('Theme color')
@@ -95,7 +147,7 @@ export class MiniNotesSettingTab extends PluginSettingTab {
 					await this.plugin.savePluginData();
 					this.app.workspace.trigger('mini-notes:settings-changed');
 				}));
-		
+
 		// Set initial visibility of custom color setting
 		customColorSetting.settingEl.addClass('custom-color-setting');
 		customColorSetting.settingEl.style.display = this.plugin.data.themeColor === 'custom' ? 'flex' : 'none';
@@ -109,7 +161,7 @@ export class MiniNotesSettingTab extends PluginSettingTab {
 		footer.style.paddingTop = '1em';
 		// eslint-disable-next-line obsidianmd/no-static-styles-assignment
 		footer.style.background = 'none';
-		
+
 		const footerContent = footer.createDiv();
 		// Required for proper footer content layout - CSS classes not available for settings footer
 		// eslint-disable-next-line obsidianmd/no-static-styles-assignment
@@ -122,9 +174,9 @@ export class MiniNotesSettingTab extends PluginSettingTab {
 		footerContent.style.fontSize = '0.7em';
 		// eslint-disable-next-line obsidianmd/no-static-styles-assignment
 		footerContent.style.color = 'var(--text-muted)';
-		
+
 		footerContent.createSpan({ text: 'Built by ' });
-		
+
 		const link = footerContent.createEl('a', {
 			text: 'Rknastenka.com',
 			href: 'https://rknastenka.com'
@@ -133,7 +185,7 @@ export class MiniNotesSettingTab extends PluginSettingTab {
 		// eslint-disable-next-line obsidianmd/no-static-styles-assignment
 		link.style.color = 'var(--text-muted)';
 		link.setAttribute('target', '_blank');
-		
+
 		const githubIcon = footerContent.createSpan();
 		// Required for proper icon display and interaction - CSS classes not available for settings footer icons
 		// eslint-disable-next-line obsidianmd/no-static-styles-assignment
