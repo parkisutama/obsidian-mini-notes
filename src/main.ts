@@ -14,37 +14,37 @@ export default class VisualDashboardPlugin extends Plugin {
 			// Register the custom icon
 			addIcon('dashboard-grid', DASHBOARD_ICON);
 
-		// Register the custom view
-		this.registerView(
-			VIEW_TYPE_VISUAL_DASHBOARD,
-			(leaf) => new VisualDashboardView(leaf, this)
-		);
+			// Register the custom view
+			this.registerView(
+				VIEW_TYPE_VISUAL_DASHBOARD,
+				(leaf) => new VisualDashboardView(leaf, this)
+			);
 
-		// Add ribbon icon to activate the view
-		this.addRibbonIcon('dashboard-grid', 'Open mini notes', async () => {
-			await this.activateView();
-		});
-
-		// Add command to open the dashboard
-		this.addCommand({
-			id: 'open-visual-dashboard',
-			name: 'Open view',
-			callback: async () => {
+			// Add ribbon icon to activate the view
+			this.addRibbonIcon('dashboard-grid', 'Open mini notes', async () => {
 				await this.activateView();
-			}
-		});
+			});
 
-		// Add command to create a new mini note
-		this.addCommand({
-			id: 'create-mini-note',
-			name: 'Create new mini note',
-			callback: async () => {
-				await this.createMiniNote();
-			}
-		});
+			// Add command to open the dashboard
+			this.addCommand({
+				id: 'open-visual-dashboard',
+				name: 'Open view',
+				callback: async () => {
+					await this.activateView();
+				}
+			});
 
-		// Add settings tab
-		this.addSettingTab(new MiniNotesSettingTab(this.app, this));
+			// Add command to create a new mini note
+			this.addCommand({
+				id: 'create-mini-note',
+				name: 'Create new mini note',
+				callback: async () => {
+					await this.createMiniNote();
+				}
+			});
+
+			// Add settings tab
+			this.addSettingTab(new MiniNotesSettingTab(this.app, this));
 		} catch (error) {
 			console.error('Error loading Mini Notes plugin:', error);
 		}
@@ -54,7 +54,7 @@ export default class VisualDashboardPlugin extends Plugin {
 		try {
 			const loadedData = await this.loadData() as DashboardData | null;
 			this.data = Object.assign({}, DEFAULT_DATA, loadedData ?? {});
-			
+
 			// Migration: if sourceFolder is empty string, use the new default
 			if (this.data.sourceFolder === '') {
 				this.data.sourceFolder = DEFAULT_DATA.sourceFolder;
@@ -113,7 +113,7 @@ export default class VisualDashboardPlugin extends Plugin {
 		try {
 			const folderPath = normalizePath('Mini Notes');
 			const folder = this.app.vault.getAbstractFileByPath(folderPath);
-			
+
 			if (!folder) {
 				await this.app.vault.createFolder(folderPath);
 				new Notice('Mini notes folder created');
@@ -125,37 +125,64 @@ export default class VisualDashboardPlugin extends Plugin {
 
 	async createMiniNote() {
 		try {
-			// Always create notes in Mini Notes folder
-			const folderPath = normalizePath('Mini Notes');
-			
-			// Ensure folder exists
-			if (!this.app.vault.getAbstractFileByPath(folderPath)) {
+			let folderPath: string;
+
+			// Determine which folder to use
+			if (this.data.useObsidianDefault) {
+				// Use Obsidian's default folder setting
+				// @ts-expect-error: accessing internal Obsidian API
+				const defaultFolder = this.app.vault.getConfig('newFileLocation') as string;
+
+				// @ts-expect-error: accessing internal Obsidian API
+				const specifiedFolder = this.app.vault.getConfig('newFileFolderPath') as string;
+
+				if (defaultFolder === 'folder' && specifiedFolder) {
+					folderPath = normalizePath(specifiedFolder);
+				} else if (defaultFolder === 'current') {
+					// Use currently active file's folder
+					const activeFile = this.app.workspace.getActiveFile();
+					if (activeFile) {
+						folderPath = activeFile.parent?.path || '/';
+					} else {
+						folderPath = '/';
+					}
+				} else {
+					// Default to root
+					folderPath = '/';
+				}
+			} else {
+				// Use plugin's custom folder setting
+				folderPath = normalizePath(this.data.newNotesFolder);
+			}
+
+			// Ensure folder exists (skip if root folder)
+			if (folderPath !== '/' && !this.app.vault.getAbstractFileByPath(folderPath)) {
 				await this.app.vault.createFolder(folderPath);
 			}
-			
+
 			// Generate filename with date only
 			const now = new Date();
 			const date = now.toLocaleDateString('en-CA'); // YYYY-MM-DD format
-			
+
 			// Find available filename
 			let fileName = `${date}.md`;
-			let filePath = normalizePath(`${folderPath}/${fileName}`);
+			let filePath = folderPath === '/' ? normalizePath(fileName) : normalizePath(`${folderPath}/${fileName}`);
 			let counter = 1;
-			
+
 			while (this.app.vault.getAbstractFileByPath(filePath)) {
 				fileName = `${date} (${counter}).md`;
-				filePath = normalizePath(`${folderPath}/${fileName}`);
+				filePath = folderPath === '/' ? normalizePath(fileName) : normalizePath(`${folderPath}/${fileName}`);
 				counter++;
 			}
-			
+
 			// Create empty file
 			const content = '';
 			const file = await this.app.vault.create(filePath, content);
-			
+
 			// Open the file in a new leaf
 			const leaf = this.app.workspace.getLeaf('tab');
 			await leaf.openFile(file);
-			
+
 			new Notice('New mini note created');
 		} catch (error) {
 			console.error('Error creating mini note:', error);
