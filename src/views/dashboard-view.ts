@@ -20,6 +20,8 @@ export class VisualDashboardView extends ItemView {
 	private filterPinned: 'all' | 'pinned' | 'unpinned' = 'all';
 	private filterTag: string | null = null;
 	private allTags: string[] = [];
+	private tagDropdown: HTMLElement | null = null;
+	private tagIcon: HTMLElement | null = null;
 
 	constructor(leaf: WorkspaceLeaf, plugin: VisualDashboardPlugin) {
 		super(leaf);
@@ -87,35 +89,35 @@ export class VisualDashboardView extends ItemView {
 
 		// Tag filter - icon with dropdown
 		const tagWrapper = controls.createDiv({ cls: 'tag-filter-wrapper' });
-		const tagIcon = tagWrapper.createDiv({ cls: 'filter-icon tag-filter-button' });
-		setIcon(tagIcon, 'tag');
+		this.tagIcon = tagWrapper.createDiv({ cls: 'filter-icon tag-filter-button' });
+		setIcon(this.tagIcon, 'tag');
 
 		// Create dropdown menu
-		const dropdown = tagWrapper.createDiv({ cls: 'tag-dropdown-menu' });
+		this.tagDropdown = tagWrapper.createDiv({ cls: 'tag-dropdown-menu' });
 
 		// Add "All tags" option
-		const allOption = dropdown.createDiv({ cls: 'tag-dropdown-item' });
+		const allOption = this.tagDropdown.createDiv({ cls: 'tag-dropdown-item' });
 		allOption.textContent = 'All tags';
 		allOption.addEventListener('click', () => {
 			this.filterTag = null;
-			tagIcon.toggleClass('active', false);
-			dropdown.toggleClass('show', false);
+			this.tagIcon!.toggleClass('active', false);
+			this.tagDropdown!.toggleClass('show', false);
 			void this.renderCards();
 		});
 
 		// Toggle dropdown on click
-		tagIcon.addEventListener('click', (e: MouseEvent) => {
+		this.tagIcon.addEventListener('click', (e: MouseEvent) => {
 			e.stopPropagation();
-			const isCurrentlyShown = dropdown.hasClass('show');
-			dropdown.toggleClass('show', !isCurrentlyShown);
+			const isCurrentlyShown = this.tagDropdown!.hasClass('show');
+			this.tagDropdown!.toggleClass('show', !isCurrentlyShown);
 			if (!isCurrentlyShown) {
-				void this.populateTagDropdown(dropdown, tagIcon);
+				this.populateTagDropdown();
 			}
 		});
 
 		// Close dropdown when clicking outside
 		this.registerDomEvent(document, 'click', () => {
-			dropdown.toggleClass('show', false);
+			this.tagDropdown!.toggleClass('show', false);
 		});
 
 		// Pin toggle icon
@@ -189,23 +191,25 @@ export class VisualDashboardView extends ItemView {
 		await this.renderCards();
 	}
 
-	private populateTagDropdown(dropdown: HTMLElement, tagIcon: HTMLElement) {
-		this.renderTagDropdownItems(dropdown, tagIcon);
+	private populateTagDropdown() {
+		this.renderTagDropdownItems();
 	}
 
-	private renderTagDropdownItems(dropdown: HTMLElement, tagIcon: HTMLElement) {
+	private renderTagDropdownItems() {
+		if (!this.tagDropdown || !this.tagIcon) return;
+
 		// Remove existing tag items (keep "All tags" option)
-		const existingTags = dropdown.querySelectorAll('.tag-dropdown-item:not(:first-child)');
+		const existingTags = this.tagDropdown.querySelectorAll('.tag-dropdown-item:not(:first-child)');
 		existingTags.forEach(el => el.remove());
 
 		this.allTags.forEach(tag => {
-			const item = dropdown.createDiv({ cls: 'tag-dropdown-item tag-pill' });
+			const item = this.tagDropdown!.createDiv({ cls: 'tag-dropdown-item tag-pill' });
 			item.textContent = tag;
 			item.addEventListener('click', (e: MouseEvent) => {
 				e.stopPropagation();
 				this.filterTag = tag;
-				tagIcon.toggleClass('active', true);
-				dropdown.toggleClass('show', false);
+				this.tagIcon!.toggleClass('active', true);
+				this.tagDropdown!.toggleClass('show', false);
 				void this.renderCards();
 			});
 		});
@@ -258,10 +262,13 @@ export class VisualDashboardView extends ItemView {
 				return allowedExts.includes(ext);
 			});
 
+			// Filter out Excalidraw files (they have .md extension but are not regular markdown)
+			files = files.filter((file: TFile) => !file.path.toLowerCase().endsWith('.excalidraw.md'));
+
 			// Filter by source folder if specified ("/" = all notes)
-			const sourceFolder = this.plugin.data.sourceFolder.trim();
+			const sourceFolder = this.plugin.data.sourceFolder.trim().replace(/\/+$/, '');
 			if (sourceFolder && sourceFolder !== '/') {
-				files = files.filter((file: TFile) => file.path.startsWith(sourceFolder));
+				files = files.filter((file: TFile) => file.path.startsWith(sourceFolder + '/'));
 			}
 
 			// Filter out config folder files to avoid reading plugin/config files
@@ -270,41 +277,53 @@ export class VisualDashboardView extends ItemView {
 			// Filter out excluded folders
 			if (this.plugin.data.excludedFolders.length > 0) {
 				files = files.filter((file: TFile) => {
-					return !this.plugin.data.excludedFolders.some(excludedFolder =>
-						file.path.startsWith(excludedFolder + '/') || file.path === excludedFolder
-					);
+					return !this.plugin.data.excludedFolders.some(excludedFolder => {
+						const normalized = excludedFolder.trim().replace(/\/+$/, '');
+						return file.path.startsWith(normalized + '/');
+					});
 				});
 			}
 
-			files = files
-				.sort((a: TFile, b: TFile) => b.stat.mtime - a.stat.mtime)
-				.slice(0, this.plugin.data.maxNotes * FILE_FETCH_MULTIPLIER); // Get more initially for filtering
-
-			// Pre-load content for tag filtering with error handling
-			const fileContents = new Map<string, string>();
+			// Collect tags from ALL files (before slicing) to show complete tag list
 			const tagSet = new Set<string>();
 			for (const file of files) {
 				try {
 					const content = await this.app.vault.cachedRead(file);
-					fileContents.set(file.path, content);
 					const tags = extractTags(content);
 					tags.forEach(tag => tagSet.add(tag));
+				} catch (error) {
+					console.warn(`Failed to read file ${file.path} for tags:`, error);
+				}
+			}
+			this.allTags = Array.from(tagSet).sort();
+
+			// Update tag dropdown with new tags
+			this.renderTagDropdownItems();
+
+			// Now sort and limit files for display
+			files = files
+				.sort((a: TFile, b: TFile) => b.stat.mtime - a.stat.mtime)
+				.slice(0, this.plugin.data.maxNotes * FILE_FETCH_MULTIPLIER); // Get more initially for filtering
+
+			// Pre-load content for filtering (only for the limited set we'll display)
+			const fileContents = new Map<string, string>();
+			for (const file of files) {
+				try {
+					const content = await this.app.vault.cachedRead(file);
+					fileContents.set(file.path, content);
 				} catch (error) {
 					console.warn(`Failed to read file ${file.path}:`, error);
 					fileContents.set(file.path, '');
 				}
 			}
 
-			this.allTags = Array.from(tagSet).sort();
+			// Filter out Excalidraw files by content (catches files not following .excalidraw.md naming)
+			files = files.filter((f: TFile) => {
+				const content = fileContents.get(f.path) || '';
+				// Check for excalidraw-plugin in frontmatter or Excalidraw JSON markers
+				return !content.includes('excalidraw-plugin:') && !content.includes('# Excalidraw Data');
+			});
 
-			// Apply pinned filter
-			if (this.filterPinned === 'pinned') {
-				files = files.filter((f: TFile) => this.plugin.isPinned(f.path));
-			} else if (this.filterPinned === 'unpinned') {
-				files = files.filter((f: TFile) => !this.plugin.isPinned(f.path));
-			}
-
-			// Apply tag filter
 			if (this.filterTag) {
 				files = files.filter((f: TFile) => {
 					const content = fileContents.get(f.path) || '';
