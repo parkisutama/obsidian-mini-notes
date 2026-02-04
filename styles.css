@@ -922,3 +922,103 @@
         min-width: 400px;
     }
 }
+
+/* ============================================
+   Excluded Folders Settings
+   ============================================ */
+
+.excluded-folders-list {
+    margin-top: 8px;
+    margin-bottom: 16px;
+    padding: 8px;
+    background: var(--background-secondary);
+    border-radius: 6px;
+}
+
+.excluded-folder-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 8px;
+    margin-bottom: 4px;
+    background: var(--background-primary);
+    border-radius: 4px;
+    border: 1px solid var(--background-modifier-border);
+}
+
+.excluded-folder-item:last-child {
+    margin-bottom: 0;
+}
+
+.excluded-folder-item span {
+    font-size: 13px;
+    color: var(--text-normal);
+    flex: 1;
+}
+
+.excluded-folder-remove {
+    padding: 2px 8px;
+    background: transparent;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    transition: all 0.2s ease;
+}
+
+.excluded-folder-remove:hover {
+    background: var(--background-modifier-error);
+    color: var(--text-on-accent);
+    border-color: var(--background-modifier-error);
+}
+
+/* ============================================
+   Allowed Extensions Settings
+   ============================================ */
+
+.allowed-extensions-list {
+    margin-top: 8px;
+    margin-bottom: 16px;
+    padding: 8px;
+    background: var(--background-secondary);
+    border-radius: 6px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.extension-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    background: var(--background-primary);
+    border-radius: 4px;
+    border: 1px solid var(--background-modifier-border);
+}
+
+.extension-item span {
+    font-size: 13px;
+    color: var(--text-normal);
+    font-family: var(--font-monospace);
+}
+
+.extension-remove {
+    padding: 0 6px;
+    background: transparent;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 3px;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    transition: all 0.2s ease;
+}
+
+.extension-remove:hover {
+    background: var(--background-modifier-error);
+    color: var(--text-on-accent);
+    border-color: var(--background-modifier-error);
+}

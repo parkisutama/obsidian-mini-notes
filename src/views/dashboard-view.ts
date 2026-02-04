@@ -248,8 +248,15 @@ export class VisualDashboardView extends ItemView {
 		try {
 			this.miniNotesGrid.empty();
 
-			// Get all markdown files, filtered by source folder if specified
-			let files = this.app.vault.getMarkdownFiles();
+			// Get all files matching allowed extensions
+			const allowedExts = this.plugin.data.allowedExtensions.length > 0
+				? this.plugin.data.allowedExtensions
+				: ['md']; // Default to .md if no extensions configured
+
+			let files = this.app.vault.getFiles().filter((file: TFile) => {
+				const ext = file.extension.toLowerCase();
+				return allowedExts.includes(ext);
+			});
 
 			// Filter by source folder if specified ("/" = all notes)
 			const sourceFolder = this.plugin.data.sourceFolder.trim();
@@ -259,6 +266,15 @@ export class VisualDashboardView extends ItemView {
 
 			// Filter out config folder files to avoid reading plugin/config files
 			files = files.filter((file: TFile) => !file.path.startsWith(this.app.vault.configDir + '/'));
+
+			// Filter out excluded folders
+			if (this.plugin.data.excludedFolders.length > 0) {
+				files = files.filter((file: TFile) => {
+					return !this.plugin.data.excludedFolders.some(excludedFolder =>
+						file.path.startsWith(excludedFolder + '/') || file.path === excludedFolder
+					);
+				});
+			}
 
 			files = files
 				.sort((a: TFile, b: TFile) => b.stat.mtime - a.stat.mtime)
