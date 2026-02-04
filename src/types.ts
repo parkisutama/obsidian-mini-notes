@@ -14,6 +14,10 @@ export interface DashboardData {
 	useObsidianDefault: boolean;
 	newNotesFolder: string;
 	openAfterCreate: boolean;
+	excludedFolders: string[];
+	allowedExtensions: string[];
+	autoCreateFolder: boolean;
+	autoCreateFolderPath: string;
 }
 
 export const DEFAULT_DATA: DashboardData = {
@@ -27,5 +31,9 @@ export const DEFAULT_DATA: DashboardData = {
 	customThemeColor: '#000000',
 	useObsidianDefault: true,
 	newNotesFolder: 'Mini Notes',
-	openAfterCreate: false
+	openAfterCreate: false,
+	excludedFolders: [],
+	allowedExtensions: ['md'],
+	autoCreateFolder: true,
+	autoCreateFolderPath: 'Mini Notes'
 };

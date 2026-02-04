@@ -111,15 +111,19 @@ export default class VisualDashboardPlugin extends Plugin {
 
 	async ensureMiniNotesFolder() {
 		try {
-			const folderPath = normalizePath('Mini Notes');
+			if (!this.data.autoCreateFolder) {
+				return;
+			}
+
+			const folderPath = normalizePath(this.data.autoCreateFolderPath);
 			const folder = this.app.vault.getAbstractFileByPath(folderPath);
 
 			if (!folder) {
 				await this.app.vault.createFolder(folderPath);
-				new Notice('Mini notes folder created');
+				new Notice(`Folder "${folderPath}" created`);
 			}
 		} catch (error) {
-			console.error('Error creating Mini Notes folder:', error);
+			console.error('Error creating folder:', error);
 		}
 	}
 
