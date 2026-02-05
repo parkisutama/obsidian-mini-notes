@@ -1,6 +1,6 @@
 # Mini Notes
 Your quick thoughts, beautifully displayed, without worrying about organization.
-Review them later in a colorful a Google Keep-style colorful card-based view where you can pin, tag, and arrange what matters.
+Review them later in a colorful Google Keep-style card-based view, where you can pin, tag, and arrange what matters.
 
 - view your notes in a google keep-notes similar layout
 - change the bg color of your notes!
