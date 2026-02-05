@@ -1,4 +1,4 @@
-import { Plugin, WorkspaceLeaf, addIcon, Notice, normalizePath } from 'obsidian';
+import { Plugin, WorkspaceLeaf, addIcon, Notice, normalizePath, TAbstractFile, TFile } from 'obsidian';
 import { DashboardData, DEFAULT_DATA, VIEW_TYPE_VISUAL_DASHBOARD, VIEW_TYPE_SIDEBAR, DASHBOARD_ICON } from './types';
 import { VisualDashboardView } from './views/dashboard-view';
 import { SidebarView } from './views/sidebar-view';
@@ -11,6 +11,20 @@ export default class VisualDashboardPlugin extends Plugin {
 		try {
 			await this.loadPluginData();
 			await this.ensureMiniNotesFolder();
+
+			// Register file rename handler to preserve note colors, pins, and order
+			this.registerEvent(
+				this.app.vault.on('rename', (file: TAbstractFile, oldPath: string) => {
+					this.handleFileRename(file, oldPath);
+				})
+			);
+
+			// Register file delete handler to clean up stored data
+			this.registerEvent(
+				this.app.vault.on('delete', (file: TAbstractFile) => {
+					this.handleFileDelete(file);
+				})
+			);
 
 			// Register the custom icon
 			addIcon('dashboard-grid', DASHBOARD_ICON);
@@ -368,6 +382,71 @@ export default class VisualDashboardPlugin extends Plugin {
 			}
 		} catch (error) {
 			console.error('Error activating sidebar view:', error);
+		}
+	}
+
+	async handleFileRename(file: TAbstractFile, oldPath: string) {
+		if (!(file instanceof TFile)) return;
+
+		const newPath = file.path;
+		let dataChanged = false;
+
+		// Update noteColors
+		if (this.data.noteColors[oldPath]) {
+			this.data.noteColors[newPath] = this.data.noteColors[oldPath];
+			delete this.data.noteColors[oldPath];
+			dataChanged = true;
+		}
+
+		// Update pinnedNotes
+		const pinnedIndex = this.data.pinnedNotes.indexOf(oldPath);
+		if (pinnedIndex > -1) {
+			this.data.pinnedNotes[pinnedIndex] = newPath;
+			dataChanged = true;
+		}
+
+		// Update noteOrder
+		const orderIndex = this.data.noteOrder.indexOf(oldPath);
+		if (orderIndex > -1) {
+			this.data.noteOrder[orderIndex] = newPath;
+			dataChanged = true;
+		}
+
+		if (dataChanged) {
+			await this.savePluginData();
+			// Trigger view refresh
+			this.app.workspace.trigger('mini-notes:settings-changed');
+		}
+	}
+
+	async handleFileDelete(file: TAbstractFile) {
+		if (!(file instanceof TFile)) return;
+
+		const filePath = file.path;
+		let dataChanged = false;
+
+		// Remove from noteColors
+		if (this.data.noteColors[filePath]) {
+			delete this.data.noteColors[filePath];
+			dataChanged = true;
+		}
+
+		// Remove from pinnedNotes
+		const pinnedIndex = this.data.pinnedNotes.indexOf(filePath);
+		if (pinnedIndex > -1) {
+			this.data.pinnedNotes.splice(pinnedIndex, 1);
+			dataChanged = true;
+		}
+
+		// Remove from noteOrder
+		const orderIndex = this.data.noteOrder.indexOf(filePath);
+		if (orderIndex > -1) {
+			this.data.noteOrder.splice(orderIndex, 1);
+			dataChanged = true;
+		}
+
+		if (dataChanged) {
+			await this.savePluginData();
 		}
 	}
 
