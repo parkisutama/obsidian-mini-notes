@@ -1,6 +1,7 @@
 import { Plugin, WorkspaceLeaf, addIcon, Notice, normalizePath } from 'obsidian';
-import { DashboardData, DEFAULT_DATA, VIEW_TYPE_VISUAL_DASHBOARD, DASHBOARD_ICON } from './types';
+import { DashboardData, DEFAULT_DATA, VIEW_TYPE_VISUAL_DASHBOARD, VIEW_TYPE_SIDEBAR, DASHBOARD_ICON } from './types';
 import { VisualDashboardView } from './views/dashboard-view';
+import { SidebarView } from './views/sidebar-view';
 import { MiniNotesSettingTab } from './settings';
 
 export default class VisualDashboardPlugin extends Plugin {
@@ -14,15 +15,30 @@ export default class VisualDashboardPlugin extends Plugin {
 			// Register the custom icon
 			addIcon('dashboard-grid', DASHBOARD_ICON);
 
-			// Register the custom view
+			// Register the custom views
 			this.registerView(
 				VIEW_TYPE_VISUAL_DASHBOARD,
 				(leaf) => new VisualDashboardView(leaf, this)
 			);
 
-			// Add ribbon icon to activate the view
+			this.registerView(
+				VIEW_TYPE_SIDEBAR,
+				(leaf) => new SidebarView(leaf, this)
+			);
+
+			// Add ribbon icon to activate the dashboard view
 			this.addRibbonIcon('dashboard-grid', 'Open mini notes', async () => {
-				await this.activateView();
+				// Open based on default view type setting
+				if (this.data.defaultViewType === 'sidebar') {
+					await this.activateSidebarView();
+				} else {
+					await this.activateView();
+				}
+			});
+
+			// Add ribbon icon to activate the sidebar view
+			this.addRibbonIcon('list', 'Open mini notes sidebar', async () => {
+				await this.activateSidebarView();
 			});
 
 			// Add command to open the dashboard
@@ -31,6 +47,15 @@ export default class VisualDashboardPlugin extends Plugin {
 				name: 'Open view',
 				callback: async () => {
 					await this.activateView();
+				}
+			});
+
+			// Add command to open the sidebar
+			this.addCommand({
+				id: 'open-sidebar-view',
+				name: 'Open sidebar view',
+				callback: async () => {
+					await this.activateSidebarView();
 				}
 			});
 
@@ -314,6 +339,35 @@ export default class VisualDashboardPlugin extends Plugin {
 			}
 		} catch (error) {
 			console.error('Error activating view:', error);
+		}
+	}
+
+	async activateSidebarView() {
+		try {
+			const { workspace } = this.app;
+
+			let leaf: WorkspaceLeaf | null = null;
+			const leaves = workspace.getLeavesOfType(VIEW_TYPE_SIDEBAR);
+
+			if (leaves.length > 0) {
+				// If sidebar view already exists, reveal it
+				leaf = leaves[0]!;
+			} else {
+				// Create a new sidebar leaf
+				leaf = workspace.getRightLeaf(false);
+				if (leaf) {
+					await leaf.setViewState({
+						type: VIEW_TYPE_SIDEBAR,
+						active: true,
+					});
+				}
+			}
+
+			if (leaf) {
+				await workspace.revealLeaf(leaf);
+			}
+		} catch (error) {
+			console.error('Error activating sidebar view:', error);
 		}
 	}
 

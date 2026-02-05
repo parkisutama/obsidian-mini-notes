@@ -13,6 +13,22 @@ export class MiniNotesSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 		containerEl.empty();
 
+		// View settings section
+		containerEl.createEl('h3', { text: 'View settings' });
+
+		new Setting(containerEl)
+			.setName('Default view type')
+			.setDesc('Choose which view opens when you click the ribbon icon')
+			.addDropdown(dropdown => {
+				dropdown.addOption('dashboard', 'Dashboard (full view)');
+				dropdown.addOption('sidebar', 'Sidebar (list view)');
+				dropdown.setValue(this.plugin.data.defaultViewType);
+				dropdown.onChange(async (value) => {
+					this.plugin.data.defaultViewType = value as 'dashboard' | 'sidebar';
+					await this.plugin.savePluginData();
+				});
+			});
+
 		new Setting(containerEl)
 			.setName('View title')
 			.setDesc('Custom title for the view')
