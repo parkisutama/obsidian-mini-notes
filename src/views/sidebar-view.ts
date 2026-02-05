@@ -125,6 +125,14 @@ export class SidebarView extends ItemView {
             menu.showAtMouseEvent(new MouseEvent('click'));
         });
 
+        // Full view button
+        const fullViewBtn = filterGroup.createDiv({ cls: 'filter-icon' });
+        setIcon(fullViewBtn, 'layout-dashboard');
+        fullViewBtn.setAttribute('aria-label', 'Open full view');
+        fullViewBtn.addEventListener('click', () => {
+            void this.plugin.activateView();
+        });
+
         // New note button
         const newNoteBtn = controls.createDiv({ cls: 'filter-icon new-note-btn' });
         setIcon(newNoteBtn, 'plus');
@@ -345,6 +353,12 @@ export class SidebarView extends ItemView {
                 noteItem.addClass('note-pinned');
             }
 
+            // Apply saved color if exists
+            const savedColor = this.plugin.data.noteColors[file.path];
+            if (savedColor) {
+                noteItem.style.backgroundColor = savedColor;
+            }
+
             // Get content for preview
             const content = await this.app.vault.cachedRead(file);
             const cleanContent = stripMarkdown(content);
@@ -397,12 +411,33 @@ export class SidebarView extends ItemView {
                         });
                 });
 
-                menu.addItem((item) => {
-                    item.setTitle('Open in full view')
-                        .setIcon('layout-dashboard')
-                        .onClick(() => {
-                            void this.plugin.activateView();
-                        });
+                // Color submenu
+                const pastelColors = [
+                    { name: 'Pink', color: 'var(--pastel-pink)' },
+                    { name: 'Peach', color: 'var(--pastel-peach)' },
+                    { name: 'Yellow', color: 'var(--pastel-yellow)' },
+                    { name: 'Green', color: 'var(--pastel-green)' },
+                    { name: 'Blue', color: 'var(--pastel-blue)' },
+                    { name: 'Purple', color: 'var(--pastel-purple)' },
+                    { name: 'Magenta', color: 'var(--pastel-magenta)' },
+                    { name: 'Remove color', color: '' }
+                ];
+
+                pastelColors.forEach(({ name, color }) => {
+                    menu.addItem((item) => {
+                        item.setTitle(name)
+                            .setIcon(color ? 'palette' : 'eraser')
+                            .onClick(() => {
+                                if (color) {
+                                    noteItem.style.backgroundColor = color;
+                                    this.plugin.data.noteColors[file.path] = color;
+                                } else {
+                                    noteItem.style.backgroundColor = '';
+                                    delete this.plugin.data.noteColors[file.path];
+                                }
+                                void this.plugin.savePluginData();
+                            });
+                    });
                 });
 
                 menu.addSeparator();
