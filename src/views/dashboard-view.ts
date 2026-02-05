@@ -263,7 +263,11 @@ export class VisualDashboardView extends ItemView {
 			});
 
 			// Filter out Excalidraw files (they have .md extension but are not regular markdown)
-			files = files.filter((file: TFile) => !file.path.toLowerCase().endsWith('.excalidraw.md'));
+			files = files.filter((file: TFile) => {
+				const path = file.path.toLowerCase();
+				// Check for .excalidraw extension or .excalidraw.md pattern
+				return !path.endsWith('.excalidraw.md') && !path.endsWith('.excalidraw');
+			});
 
 			// Filter by source folder if specified ("/" = all notes)
 			const sourceFolder = this.plugin.data.sourceFolder.trim().replace(/\/+$/, '');

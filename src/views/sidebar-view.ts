@@ -196,8 +196,22 @@ export class SidebarView extends ItemView {
             const sourceFolder = this.plugin.data.sourceFolder;
             const maxNotes = this.plugin.data.maxNotes || 150;
 
-            // Get all markdown files
-            let files: TFile[] = this.app.vault.getMarkdownFiles();
+            // Get all files matching allowed extensions
+            const allowedExts = this.plugin.data.allowedExtensions.length > 0
+                ? this.plugin.data.allowedExtensions
+                : ['md']; // Default to .md if no extensions configured
+
+            let files: TFile[] = this.app.vault.getFiles().filter((file: TFile) => {
+                const ext = file.extension.toLowerCase();
+                return allowedExts.includes(ext);
+            });
+
+            // Filter out Excalidraw files (they have .md extension but are not regular markdown)
+            files = files.filter((file: TFile) => {
+                const path = file.path.toLowerCase();
+                // Check for .excalidraw extension or .excalidraw.md pattern
+                return !path.endsWith('.excalidraw.md') && !path.endsWith('.excalidraw');
+            });
 
             // Filter by source folder
             if (sourceFolder !== '/') {
