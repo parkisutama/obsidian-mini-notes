@@ -4,6 +4,7 @@ import { VIEW_TYPE_SIDEBAR } from '../types';
 import { extractTags, stripMarkdown } from '../utils/markdown';
 import { formatDate } from '../utils/date';
 import { DEBOUNCE_REFRESH_MS } from '../constants';
+import { QuickNoteBar } from './quick-note-bar';
 
 export class SidebarView extends ItemView {
     private notesListContainer!: HTMLElement;
@@ -12,6 +13,7 @@ export class SidebarView extends ItemView {
     private settingsChangedHandler: () => void;
     private refreshTimeoutId: number | null = null;
     private eventsRegistered = false;
+    private quickNoteBar: QuickNoteBar | null = null;
 
     // Filter state
     private filterPinned: 'all' | 'pinned' | 'unpinned' = 'all';
@@ -43,12 +45,6 @@ export class SidebarView extends ItemView {
         const container = this.contentEl;
         container.empty();
         container.addClass('mini-notes-sidebar-container');
-
-        // Create header
-        const header = container.createDiv({ cls: 'sidebar-header' });
-
-        // Title
-        const title = header.createEl('h2', { text: 'Mini Notes', cls: 'sidebar-title' });
 
         // Search bar
         const searchContainer = container.createDiv({ cls: 'sidebar-search-container' });
@@ -92,7 +88,7 @@ export class SidebarView extends ItemView {
         const tagBtn = filterGroup.createDiv({ cls: 'filter-icon' });
         setIcon(tagBtn, 'tag');
         tagBtn.setAttribute('aria-label', 'Filter by tag');
-        tagBtn.addEventListener('click', () => {
+        tagBtn.addEventListener('click', (e: MouseEvent) => {
             const menu = new Menu();
 
             // Add "All tags" option
@@ -122,7 +118,7 @@ export class SidebarView extends ItemView {
                 });
             });
 
-            menu.showAtMouseEvent(new MouseEvent('click'));
+            menu.showAtMouseEvent(e);
         });
 
         // Full view button
@@ -133,16 +129,14 @@ export class SidebarView extends ItemView {
             void this.plugin.activateView();
         });
 
-        // New note button
-        const newNoteBtn = controls.createDiv({ cls: 'filter-icon new-note-btn' });
-        setIcon(newNoteBtn, 'plus');
-        newNoteBtn.setAttribute('aria-label', 'Create new mini note');
-        newNoteBtn.addEventListener('click', () => {
-            void this.plugin.createMiniNote();
-        });
-
         // Notes list container
         this.notesListContainer = container.createDiv({ cls: 'sidebar-notes-list' });
+
+        // Add quick note bar at bottom
+        this.quickNoteBar = new QuickNoteBar(this.plugin);
+        const quickNoteContainer = container.createDiv({ cls: 'sidebar-quick-note-container' });
+        quickNoteContainer.appendChild(this.quickNoteBar.getElement());
+        this.quickNoteBar.render();
 
         // Load and render notes
         await this.loadNotes();
