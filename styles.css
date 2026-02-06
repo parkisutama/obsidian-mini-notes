@@ -31,7 +31,7 @@
 	height: 100%;
 	overflow-y: auto;
 	overflow-x: hidden;
-	padding: 16px 24px;
+	padding: 0;
 	background: var(--background-primary);
 }
 
@@ -50,16 +50,52 @@
 }
 
 /* ============================================
-   Header - Single Row
+   Sticky Header Wrapper
+   ============================================ */
+
+.dashboard-sticky-header {
+	position: sticky;
+	top: 0;
+	z-index: 100;
+	background: var(--background-primary);
+	padding: 12px 24px;
+}
+
+/* ============================================
+   Header - Single Row with Search
    ============================================ */
 
 .dashboard-header {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	margin-bottom: 14px;
-	padding-bottom: 10px;
+	gap: 12px;
+	padding-bottom: 12px;
 	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+/* ============================================
+   Dashboard Search Bar (inline in header)
+   ============================================ */
+
+.dashboard-search-input {
+	flex: 1;
+	max-width: 280px;
+	padding: 6px 10px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 6px;
+	background: var(--background-primary);
+	color: var(--text-normal);
+	font-size: 13px;
+}
+
+.dashboard-search-input:focus {
+	outline: none;
+	border-color: var(--interactive-accent);
+}
+
+.dashboard-search-input::placeholder {
+	color: var(--text-muted);
 }
 
 .dashboard-title {
@@ -67,6 +103,8 @@
 	font-size: 15px;
 	font-weight: 500;
 	color: var(--text-normal);
+	white-space: nowrap;
+	flex-shrink: 0;
 }
 
 .dashboard-title.editable-title {
@@ -76,7 +114,9 @@
 .header-controls {
 	display: flex;
 	align-items: center;
-	gap: 4px;
+	gap: 8px;
+	flex: 1;
+	justify-content: flex-end;
 }
 
 /* Tag Filter Wrapper */
@@ -199,6 +239,7 @@
 .mini-notes-grid {
 	display: flex;
 	flex-direction: column;
+	padding: 0 24px 16px 24px;
 }
 
 .mini-notes-grid-section {
@@ -207,32 +248,74 @@
 	width: 100%;
 }
 
-@media (min-width: 1400px) {
-	.mini-notes-grid-section {
+/* Flexbox layout for sections with few items - ensures horizontal distribution */
+.mini-notes-grid-section.flex-layout {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	column-count: unset;
+}
+
+.mini-notes-grid-section.flex-layout .dashboard-card {
+	flex: 0 0 calc(50% - 6px);
+	max-width: calc(50% - 6px);
+	margin-bottom: 0;
+}
+
+.mini-notes-grid-section.flex-layout.cols-3 .dashboard-card {
+	flex: 0 0 calc(33.333% - 8px);
+	max-width: calc(33.333% - 8px);
+}
+
+.mini-notes-grid-section.flex-layout.cols-4 .dashboard-card {
+	flex: 0 0 calc(25% - 9px);
+	max-width: calc(25% - 9px);
+}
+
+@media (max-width: 649px) {
+	.mini-notes-grid-section.flex-layout .dashboard-card,
+	.mini-notes-grid-section.flex-layout.cols-3 .dashboard-card,
+	.mini-notes-grid-section.flex-layout.cols-4 .dashboard-card {
+		flex: 0 0 calc(50% - 6px);
+		max-width: calc(50% - 6px);
+	}
+}
+
+@media (max-width: 449px) {
+	.mini-notes-grid-section.flex-layout .dashboard-card,
+	.mini-notes-grid-section.flex-layout.cols-3 .dashboard-card,
+	.mini-notes-grid-section.flex-layout.cols-4 .dashboard-card {
+		flex: 0 0 100%;
+		max-width: 100%;
+	}
+}
+
+@media (min-width: 1200px) {
+	.mini-notes-grid-section:not(.flex-layout) {
 		column-count: 6;
 	}
 }
 
-@media (min-width: 1100px) and (max-width: 1399px) {
-	.mini-notes-grid-section {
+@media (min-width: 900px) and (max-width: 1199px) {
+	.mini-notes-grid-section:not(.flex-layout) {
 		column-count: 5;
 	}
 }
 
-@media (min-width: 800px) and (max-width: 1099px) {
-	.mini-notes-grid-section {
+@media (min-width: 650px) and (max-width: 899px) {
+	.mini-notes-grid-section:not(.flex-layout) {
 		column-count: 4;
 	}
 }
 
-@media (min-width: 500px) and (max-width: 799px) {
-	.mini-notes-grid-section {
+@media (min-width: 450px) and (max-width: 649px) {
+	.mini-notes-grid-section:not(.flex-layout) {
 		column-count: 3;
 	}
 }
 
-@media (max-width: 499px) {
-	.mini-notes-grid-section {
+@media (max-width: 449px) {
+	.mini-notes-grid-section:not(.flex-layout) {
 		column-count: 2;
 	}
 }
@@ -524,7 +607,8 @@
 }
 
 /* Tables in preview */
-.card-preview table {
+.card-preview table,
+.note-item-preview table {
 	border-collapse: collapse;
 	width: 100%;
 	margin: 8px 0;
@@ -533,18 +617,22 @@
 }
 
 .card-preview table th,
-.card-preview table td {
+.card-preview table td,
+.note-item-preview table th,
+.note-item-preview table td {
 	border: 1px solid var(--background-modifier-border);
 	padding: 4px 8px;
 	text-align: left;
 }
 
-.card-preview table th {
+.card-preview table th,
+.note-item-preview table th {
 	background: var(--background-secondary);
 	font-weight: 600;
 }
 
-.card-preview table tr:hover {
+.card-preview table tr:hover,
+.note-item-preview table tr:hover {
 	background: var(--background-modifier-hover);
 }
 

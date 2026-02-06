@@ -105,3 +105,15 @@ export function getPreviewText(content: string, maxLength: number): string {
 
 	return text;
 }
+
+// Get markdown content for rendering (only strips frontmatter, preserves markdown syntax)
+export function getMarkdownForPreview(content: string, maxLength: number): string {
+	// Only remove YAML frontmatter, keep all markdown formatting
+	let text = content.replace(/^---[\s\S]*?---\n?/, '').trim();
+
+	if (text.length > maxLength) {
+		text = text.substring(0, maxLength).trim() + '...';
+	}
+
+	return text;
+}

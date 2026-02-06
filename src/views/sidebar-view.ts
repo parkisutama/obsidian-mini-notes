@@ -1,7 +1,7 @@
 import { ItemView, TFile, WorkspaceLeaf, setIcon, MarkdownRenderer, Menu } from 'obsidian';
 import type VisualDashboardPlugin from '../main';
 import { VIEW_TYPE_SIDEBAR } from '../types';
-import { extractTags, stripMarkdown } from '../utils/markdown';
+import { extractTags, stripMarkdown, getMarkdownForPreview } from '../utils/markdown';
 import { formatDate } from '../utils/date';
 import { DEBOUNCE_REFRESH_MS } from '../constants';
 import { QuickNoteBar } from './quick-note-bar';
@@ -370,7 +370,8 @@ export class SidebarView extends ItemView {
             // Get content for preview
             const content = await this.app.vault.cachedRead(file);
             const cleanContent = stripMarkdown(content);
-            const previewText = cleanContent.slice(0, 150).trim() || 'Empty note...';
+            const previewText = cleanContent.slice(0, 150).trim();
+            const markdownPreview = getMarkdownForPreview(content, 150);
 
             // Note header
             const noteHeader = noteItem.createDiv({ cls: 'note-item-header' });
@@ -461,9 +462,19 @@ export class SidebarView extends ItemView {
                 menu.showAtMouseEvent(e as MouseEvent);
             });
 
-            // Preview text
+            // Preview text - render with Obsidian's markdown renderer for tables, etc.
             const preview = noteItem.createDiv({ cls: 'note-item-preview' });
-            preview.textContent = previewText;
+            if (previewText.trim()) {
+                await MarkdownRenderer.render(
+                    this.app,
+                    markdownPreview,
+                    preview,
+                    file.path,
+                    this
+                );
+            } else {
+                preview.textContent = 'Empty note...';
+            }
 
             // Footer with metadata
             const footer = noteItem.createDiv({ cls: 'note-item-footer' });

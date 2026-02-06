@@ -1,7 +1,7 @@
 import { ItemView, TFile, WorkspaceLeaf, setIcon, MarkdownRenderer, Platform } from 'obsidian';
 import type VisualDashboardPlugin from '../main';
 import { VIEW_TYPE_VISUAL_DASHBOARD } from '../types';
-import { extractTags, getPreviewText, stripMarkdown } from '../utils/markdown';
+import { extractTags, getPreviewText, getMarkdownForPreview, stripMarkdown } from '../utils/markdown';
 import { formatDate } from '../utils/date';
 import { FILE_FETCH_MULTIPLIER, DEBOUNCE_REFRESH_MS, MAX_PREVIEW_LENGTH, CARD_SIZE, MAX_CARD_HEIGHT } from '../constants';
 import { QuickNoteBar, QuickNoteModal } from './quick-note-bar';
@@ -22,6 +22,7 @@ export class VisualDashboardView extends ItemView {
 	private allTags: string[] = [];
 	private tagDropdown: HTMLElement | null = null;
 	private tagIcon: HTMLElement | null = null;
+	private searchQuery: string = '';
 
 	constructor(leaf: WorkspaceLeaf, plugin: VisualDashboardPlugin) {
 		super(leaf);
@@ -56,8 +57,11 @@ export class VisualDashboardView extends ItemView {
 		// Apply theme color
 		this.applyThemeColor();
 
+		// Create sticky header wrapper
+		const stickyWrapper = this.contentEl.createDiv({ cls: 'dashboard-sticky-header' });
+
 		// Create header - single row
-		const header = this.contentEl.createDiv({ cls: 'dashboard-header' });
+		const header = stickyWrapper.createDiv({ cls: 'dashboard-header' });
 
 		// Title on left
 		const title = header.createEl('h1', { text: this.plugin.data.viewTitle || 'Do Your Best Today!', cls: 'dashboard-title editable-title' });
@@ -84,8 +88,22 @@ export class VisualDashboardView extends ItemView {
 			void this.renderCards();
 		});
 
-		// Controls on right
+		// Controls on right (search, tag filter, pin filter)
 		const controls = header.createDiv({ cls: 'header-controls' });
+
+		// Search bar in header
+		const searchInput = controls.createEl('input', {
+			cls: 'dashboard-search-input',
+			attr: {
+				placeholder: 'Search notes...',
+				type: 'text'
+			}
+		});
+
+		searchInput.addEventListener('input', (e) => {
+			this.searchQuery = (e.target as HTMLInputElement).value.toLowerCase();
+			void this.renderCards();
+		});
 
 		// Tag filter - icon with dropdown
 		const tagWrapper = controls.createDiv({ cls: 'tag-filter-wrapper' });
@@ -328,6 +346,15 @@ export class VisualDashboardView extends ItemView {
 				return !content.includes('excalidraw-plugin:') && !content.includes('# Excalidraw Data');
 			});
 
+			// Apply search filter
+			if (this.searchQuery) {
+				files = files.filter((f: TFile) => {
+					const content = fileContents.get(f.path) || '';
+					const searchableText = `${f.basename} ${stripMarkdown(content)}`.toLowerCase();
+					return searchableText.includes(this.searchQuery);
+				});
+			}
+
 			if (this.filterTag) {
 				files = files.filter((f: TFile) => {
 					const content = fileContents.get(f.path) || '';
@@ -353,10 +380,19 @@ export class VisualDashboardView extends ItemView {
 			const pinnedFiles = files.filter(f => this.plugin.isPinned(f.path)).sort(sortByOrder);
 			const unpinnedFiles = files.filter(f => !this.plugin.isPinned(f.path)).sort(sortByOrder);
 
-			// Store the combined order for drag-and-drop
-			this.currentFiles = [...pinnedFiles, ...unpinnedFiles];
+			// Apply pinned filter
+			let displayPinned = pinnedFiles;
+			let displayUnpinned = unpinnedFiles;
+			if (this.filterPinned === 'pinned') {
+				displayUnpinned = [];
+			} else if (this.filterPinned === 'unpinned') {
+				displayPinned = [];
+			}
 
-			if (files.length === 0) {
+			// Store the combined order for drag-and-drop
+			this.currentFiles = [...displayPinned, ...displayUnpinned];
+
+			if (displayPinned.length === 0 && displayUnpinned.length === 0) {
 				const emptyState = this.miniNotesGrid.createDiv({ cls: 'dashboard-empty-state' });
 				emptyState.createEl('h3', { text: 'No matching notes' });
 				emptyState.createEl('p', { text: 'Try adjusting your filters' });
@@ -366,13 +402,25 @@ export class VisualDashboardView extends ItemView {
 			let globalIndex = 0;
 
 			// Check if we need sections (both pinned and unpinned exist)
-			const needsSections = pinnedFiles.length > 0 && unpinnedFiles.length > 0;
+			const needsSections = displayPinned.length > 0 && displayUnpinned.length > 0;
+
+			// Helper to set appropriate layout based on item count
+			// Uses flexbox for few items to ensure horizontal distribution
+			const setColumnClass = (element: HTMLElement, count: number) => {
+				if (count <= 4) {
+					element.addClass('flex-layout');
+					if (count === 3) element.addClass('cols-3');
+					else if (count === 4) element.addClass('cols-4');
+				}
+				// For 5+ items, use responsive CSS columns (default)
+			};
 
 			if (needsSections) {
 				// Render pinned section
-				if (pinnedFiles.length > 0) {
+				if (displayPinned.length > 0) {
 					const pinnedGrid = this.miniNotesGrid.createDiv({ cls: 'mini-notes-grid-section' });
-					for (const file of pinnedFiles) {
+					setColumnClass(pinnedGrid, displayPinned.length);
+					for (const file of displayPinned) {
 						const card = await this.createCard(file, globalIndex++);
 						if (card) pinnedGrid.appendChild(card);
 					}
@@ -382,17 +430,20 @@ export class VisualDashboardView extends ItemView {
 				this.miniNotesGrid.createDiv({ cls: 'section-separator' });
 
 				// Render all notes section
-				if (unpinnedFiles.length > 0) {
+				if (displayUnpinned.length > 0) {
 					const notesGrid = this.miniNotesGrid.createDiv({ cls: 'mini-notes-grid-section' });
-					for (const file of unpinnedFiles) {
+					setColumnClass(notesGrid, displayUnpinned.length);
+					for (const file of displayUnpinned) {
 						const card = await this.createCard(file, globalIndex++);
 						if (card) notesGrid.appendChild(card);
 					}
 				}
 			} else {
 				// Single section without header
+				const totalCount = displayPinned.length + displayUnpinned.length;
 				const singleGrid = this.miniNotesGrid.createDiv({ cls: 'mini-notes-grid-section' });
-				for (const file of [...pinnedFiles, ...unpinnedFiles]) {
+				setColumnClass(singleGrid, totalCount);
+				for (const file of [...displayPinned, ...displayUnpinned]) {
 					const card = await this.createCard(file, globalIndex++);
 					if (card) singleGrid.appendChild(card);
 				}
@@ -424,6 +475,8 @@ export class VisualDashboardView extends ItemView {
 			const cleanContent = stripMarkdown(content);
 			const previewLength = Math.min(cleanContent.length, MAX_PREVIEW_LENGTH);
 			const previewText = getPreviewText(content, previewLength);
+			// Keep markdown formatting for rendering (tables, code blocks, etc.)
+			const markdownPreview = getMarkdownForPreview(content, previewLength);
 
 			// Dynamic sizing based on content length - more granular
 			const contentLen = cleanContent.length;
@@ -548,10 +601,10 @@ export class VisualDashboardView extends ItemView {
 			const cardContent = card.createDiv({ cls: 'card-content' });
 			if (previewText.trim()) {
 				const previewContainer = cardContent.createDiv({ cls: 'card-preview' });
-				// Render markdown natively with Obsidian's renderer
+				// Render markdown natively with Obsidian's renderer (preserves tables, code, etc.)
 				await MarkdownRenderer.render(
 					this.app,
-					previewText,
+					markdownPreview,
 					previewContainer,
 					file.path,
 					this
