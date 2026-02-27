@@ -1,10 +1,10 @@
 import { ItemView, TFile, WorkspaceLeaf, setIcon, MarkdownRenderer, Platform } from 'obsidian';
 import type VisualDashboardPlugin from '../main';
 import { VIEW_TYPE_VISUAL_DASHBOARD } from '../types';
-import { extractTags, getPreviewText, getMarkdownForPreview, stripMarkdown } from '../utils/markdown';
+import { extractTags, getPreviewText, getMarkdownForPreview, stripMarkdown, formatTagForDisplay, tagMatchesFilter, isFileInFolderOrSubfolder } from '../utils/markdown';
 import { formatDate } from '../utils/date';
 import { FILE_FETCH_MULTIPLIER, DEBOUNCE_REFRESH_MS, MAX_PREVIEW_LENGTH, CARD_SIZE, MAX_CARD_HEIGHT } from '../constants';
-import { QuickNoteBar, QuickNoteModal } from './quick-note-bar';
+import { QuickNoteBar } from './quick-note-bar';
 
 export class VisualDashboardView extends ItemView {
 	private miniNotesGrid!: HTMLElement;
@@ -16,13 +16,32 @@ export class VisualDashboardView extends ItemView {
 	private eventsRegistered = false;
 	private quickNoteBar: QuickNoteBar | null = null;
 
+	// Smooth drag and drop state
+	private dragOverTargetCard: HTMLElement | null = null;
+	private pendingDragTargetCard: HTMLElement | null = null;
+	private pendingDragClientY: number | null = null;
+	private dragFrameId: number | null = null;
+
 	// Filter state
 	private filterPinned: 'all' | 'pinned' | 'unpinned' = 'all';
 	private filterTag: string | null = null;
+	private filterFolder: string | null = null;
+	private filterColor: string | null = null;
+	private filterType: string | null = null;
 	private allTags: string[] = [];
+	private allFolders: string[] = [];
 	private tagDropdown: HTMLElement | null = null;
 	private tagIcon: HTMLElement | null = null;
+	private folderDropdown: HTMLElement | null = null;
+	private folderIcon: HTMLElement | null = null;
+	private colorDropdown: HTMLElement | null = null;
+	private colorIcon: HTMLElement | null = null;
+	private typeDropdown: HTMLElement | null = null;
+	private typeIcon: HTMLElement | null = null;
 	private searchQuery: string = '';
+
+	// Card color dropdown state
+	private activeCardColorDropdown: HTMLElement | null = null;
 
 	constructor(leaf: WorkspaceLeaf, plugin: VisualDashboardPlugin) {
 		super(leaf);
@@ -105,16 +124,50 @@ export class VisualDashboardView extends ItemView {
 			void this.renderCards();
 		});
 
+		// Folder filter - icon with dropdown
+		const folderWrapper = controls.createDiv({ cls: 'filter-wrapper' });
+		this.folderIcon = folderWrapper.createDiv({ cls: 'filter-icon folder-filter-button' });
+		setIcon(this.folderIcon, 'folder');
+		this.folderIcon.setAttribute('aria-label', 'Filter by folder');
+
+		// Create folder dropdown menu
+		this.folderDropdown = folderWrapper.createDiv({ cls: 'filter-dropdown-menu' });
+
+		// Add "All folders" option
+		const allFolderOption = this.folderDropdown.createDiv({ cls: 'filter-dropdown-item' });
+		allFolderOption.textContent = 'All folders';
+		allFolderOption.addEventListener('click', () => {
+			this.filterFolder = null;
+			this.folderIcon!.toggleClass('active', false);
+			this.folderDropdown!.toggleClass('show', false);
+			void this.renderCards();
+		});
+
+		// Toggle folder dropdown on click
+		this.folderIcon.addEventListener('click', (e: MouseEvent) => {
+			e.stopPropagation();
+			// Close other dropdowns
+			this.tagDropdown?.toggleClass('show', false);
+			this.colorDropdown?.toggleClass('show', false);
+			this.typeDropdown?.toggleClass('show', false);
+			const isCurrentlyShown = this.folderDropdown!.hasClass('show');
+			this.folderDropdown!.toggleClass('show', !isCurrentlyShown);
+			if (!isCurrentlyShown) {
+				this.populateFolderDropdown();
+			}
+		});
+
 		// Tag filter - icon with dropdown
-		const tagWrapper = controls.createDiv({ cls: 'tag-filter-wrapper' });
+		const tagWrapper = controls.createDiv({ cls: 'filter-wrapper' });
 		this.tagIcon = tagWrapper.createDiv({ cls: 'filter-icon tag-filter-button' });
 		setIcon(this.tagIcon, 'tag');
+		this.tagIcon.setAttribute('aria-label', 'Filter by tag');
 
 		// Create dropdown menu
-		this.tagDropdown = tagWrapper.createDiv({ cls: 'tag-dropdown-menu' });
+		this.tagDropdown = tagWrapper.createDiv({ cls: 'filter-dropdown-menu' });
 
 		// Add "All tags" option
-		const allOption = this.tagDropdown.createDiv({ cls: 'tag-dropdown-item' });
+		const allOption = this.tagDropdown.createDiv({ cls: 'filter-dropdown-item' });
 		allOption.textContent = 'All tags';
 		allOption.addEventListener('click', () => {
 			this.filterTag = null;
@@ -126,6 +179,10 @@ export class VisualDashboardView extends ItemView {
 		// Toggle dropdown on click
 		this.tagIcon.addEventListener('click', (e: MouseEvent) => {
 			e.stopPropagation();
+			// Close other dropdowns
+			this.folderDropdown?.toggleClass('show', false);
+			this.colorDropdown?.toggleClass('show', false);
+			this.typeDropdown?.toggleClass('show', false);
 			const isCurrentlyShown = this.tagDropdown!.hasClass('show');
 			this.tagDropdown!.toggleClass('show', !isCurrentlyShown);
 			if (!isCurrentlyShown) {
@@ -133,9 +190,108 @@ export class VisualDashboardView extends ItemView {
 			}
 		});
 
-		// Close dropdown when clicking outside
+		// Color filter - icon with dropdown
+		const colorWrapper = controls.createDiv({ cls: 'filter-wrapper' });
+		this.colorIcon = colorWrapper.createDiv({ cls: 'filter-icon color-filter-button' });
+		setIcon(this.colorIcon, 'palette');
+		this.colorIcon.setAttribute('aria-label', 'Filter by color');
+
+		// Create color dropdown menu
+		this.colorDropdown = colorWrapper.createDiv({ cls: 'filter-dropdown-menu color-dropdown' });
+
+		// Add "All colors" option
+		const allColorOption = this.colorDropdown.createDiv({ cls: 'filter-dropdown-item' });
+		allColorOption.textContent = 'All colors';
+		allColorOption.addEventListener('click', () => {
+			this.filterColor = null;
+			this.colorIcon!.toggleClass('active', false);
+			this.colorDropdown!.toggleClass('show', false);
+			void this.renderCards();
+		});
+
+		// Add "No color" option
+		const noColorOption = this.colorDropdown.createDiv({ cls: 'filter-dropdown-item' });
+		noColorOption.textContent = 'No color';
+		noColorOption.addEventListener('click', () => {
+			this.filterColor = 'none';
+			this.colorIcon!.toggleClass('active', true);
+			this.colorDropdown!.toggleClass('show', false);
+			void this.renderCards();
+		});
+
+		// Add color options
+		const colorOptions = [
+			{ name: 'Pink', color: 'var(--pastel-pink)' },
+			{ name: 'Peach', color: 'var(--pastel-peach)' },
+			{ name: 'Yellow', color: 'var(--pastel-yellow)' },
+			{ name: 'Green', color: 'var(--pastel-green)' },
+			{ name: 'Blue', color: 'var(--pastel-blue)' },
+			{ name: 'Purple', color: 'var(--pastel-purple)' },
+			{ name: 'Magenta', color: 'var(--pastel-magenta)' }
+		];
+
+		colorOptions.forEach(({ name, color }) => {
+			const item = this.colorDropdown!.createDiv({ cls: 'filter-dropdown-item color-item' });
+			const colorCircle = item.createDiv({ cls: 'color-filter-circle' });
+			colorCircle.style.backgroundColor = color;
+			item.createSpan({ text: name });
+			item.addEventListener('click', () => {
+				this.filterColor = color;
+				this.colorIcon!.toggleClass('active', true);
+				this.colorDropdown!.toggleClass('show', false);
+				void this.renderCards();
+			});
+		});
+
+		// Toggle color dropdown on click
+		this.colorIcon.addEventListener('click', (e: MouseEvent) => {
+			e.stopPropagation();
+			// Close other dropdowns
+			this.folderDropdown?.toggleClass('show', false);
+			this.tagDropdown?.toggleClass('show', false);
+			this.typeDropdown?.toggleClass('show', false);
+			this.colorDropdown!.toggleClass('show', !this.colorDropdown!.hasClass('show'));
+		});
+
+		// Type filter - icon with dropdown
+		const typeWrapper = controls.createDiv({ cls: 'filter-wrapper' });
+		this.typeIcon = typeWrapper.createDiv({ cls: 'filter-icon type-filter-button' });
+		setIcon(this.typeIcon, 'file-type');
+		this.typeIcon.setAttribute('aria-label', 'Filter by type');
+
+		// Create type dropdown menu
+		this.typeDropdown = typeWrapper.createDiv({ cls: 'filter-dropdown-menu' });
+
+		// Add "All types" option
+		const allTypeOption = this.typeDropdown.createDiv({ cls: 'filter-dropdown-item' });
+		allTypeOption.textContent = 'All types';
+		allTypeOption.addEventListener('click', () => {
+			this.filterType = null;
+			this.typeIcon!.toggleClass('active', false);
+			this.typeDropdown!.toggleClass('show', false);
+			void this.renderCards();
+		});
+
+		// Type options will be populated dynamically
+		this.typeIcon.addEventListener('click', (e: MouseEvent) => {
+			e.stopPropagation();
+			// Close other dropdowns
+			this.folderDropdown?.toggleClass('show', false);
+			this.tagDropdown?.toggleClass('show', false);
+			this.colorDropdown?.toggleClass('show', false);
+			const isCurrentlyShown = this.typeDropdown!.hasClass('show');
+			this.typeDropdown!.toggleClass('show', !isCurrentlyShown);
+			if (!isCurrentlyShown) {
+				this.populateTypeDropdown();
+			}
+		});
+
+		// Close all dropdowns when clicking outside
 		this.registerDomEvent(document, 'click', () => {
 			this.tagDropdown!.toggleClass('show', false);
+			this.folderDropdown?.toggleClass('show', false);
+			this.colorDropdown?.toggleClass('show', false);
+			this.typeDropdown?.toggleClass('show', false);
 		});
 
 		// Pin toggle icon
@@ -153,7 +309,10 @@ export class VisualDashboardView extends ItemView {
 			void this.renderCards();
 		});
 
-		// Add quick note bar for both desktop and mobile
+		// Create mini notes grid container
+		this.miniNotesGrid = this.contentEl.createDiv({ cls: 'mini-notes-grid' });
+
+		// Add quick note bar at the bottom for both desktop and mobile
 		// Mobile version will be styled differently with CSS
 		this.quickNoteBar = new QuickNoteBar(this.plugin);
 		const quickNoteContainer = this.contentEl.createDiv({ cls: 'quick-note-container' });
@@ -162,9 +321,6 @@ export class VisualDashboardView extends ItemView {
 		}
 		quickNoteContainer.appendChild(this.quickNoteBar.getElement());
 		this.quickNoteBar.render();
-
-		// Create mini notes grid container
-		this.miniNotesGrid = this.contentEl.createDiv({ cls: 'mini-notes-grid' });
 
 		// Render the cards
 		await this.renderCards();
@@ -193,6 +349,11 @@ export class VisualDashboardView extends ItemView {
 		this.registerEvent(
 			this.app.vault.on('delete', () => this.debouncedRefresh())
 		);
+
+		// Close card color dropdowns when clicking outside
+		this.registerDomEvent(document, 'click', () => {
+			this.closeAllCardColorDropdowns();
+		});
 	}
 
 	private async refreshView() {
@@ -213,16 +374,61 @@ export class VisualDashboardView extends ItemView {
 		this.renderTagDropdownItems();
 	}
 
+	private populateFolderDropdown() {
+		if (!this.folderDropdown || !this.folderIcon) return;
+
+		// Remove existing folder items (keep "All folders" option)
+		const existingFolders = this.folderDropdown.querySelectorAll('.filter-dropdown-item:not(:first-child)');
+		existingFolders.forEach(el => el.remove());
+
+		this.allFolders.forEach(folder => {
+			const item = this.folderDropdown!.createDiv({ cls: 'filter-dropdown-item folder-item' });
+			item.textContent = folder;
+			item.addEventListener('click', (e: MouseEvent) => {
+				e.stopPropagation();
+				this.filterFolder = folder;
+				this.folderIcon!.toggleClass('active', true);
+				this.folderDropdown!.toggleClass('show', false);
+				void this.renderCards();
+			});
+		});
+	}
+
+	private populateTypeDropdown() {
+		if (!this.typeDropdown || !this.typeIcon) return;
+
+		// Remove existing type items (keep "All types" option)
+		const existingTypes = this.typeDropdown.querySelectorAll('.filter-dropdown-item:not(:first-child)');
+		existingTypes.forEach(el => el.remove());
+
+		// Get unique extensions from allowed extensions
+		const allowedExts = this.plugin.data.allowedExtensions.length > 0
+			? this.plugin.data.allowedExtensions
+			: ['md'];
+
+		allowedExts.forEach(ext => {
+			const item = this.typeDropdown!.createDiv({ cls: 'filter-dropdown-item type-item' });
+			item.textContent = `.${ext}`;
+			item.addEventListener('click', (e: MouseEvent) => {
+				e.stopPropagation();
+				this.filterType = ext;
+				this.typeIcon!.toggleClass('active', true);
+				this.typeDropdown!.toggleClass('show', false);
+				void this.renderCards();
+			});
+		});
+	}
+
 	private renderTagDropdownItems() {
 		if (!this.tagDropdown || !this.tagIcon) return;
 
 		// Remove existing tag items (keep "All tags" option)
-		const existingTags = this.tagDropdown.querySelectorAll('.tag-dropdown-item:not(:first-child)');
+		const existingTags = this.tagDropdown.querySelectorAll('.filter-dropdown-item:not(:first-child)');
 		existingTags.forEach(el => el.remove());
 
 		this.allTags.forEach(tag => {
-			const item = this.tagDropdown!.createDiv({ cls: 'tag-dropdown-item tag-pill' });
-			item.textContent = tag;
+			const item = this.tagDropdown!.createDiv({ cls: 'filter-dropdown-item tag-pill' });
+			item.textContent = formatTagForDisplay(tag);
 			item.addEventListener('click', (e: MouseEvent) => {
 				e.stopPropagation();
 				this.filterTag = tag;
@@ -308,16 +514,23 @@ export class VisualDashboardView extends ItemView {
 
 			// Collect tags from ALL files (before slicing) to show complete tag list
 			const tagSet = new Set<string>();
+			const folderSet = new Set<string>();
 			for (const file of files) {
 				try {
 					const content = await this.app.vault.cachedRead(file);
 					const tags = extractTags(content);
 					tags.forEach(tag => tagSet.add(tag));
+					// Collect folder paths
+					const folder = file.parent?.path;
+					if (folder) {
+						folderSet.add(folder);
+					}
 				} catch (error) {
 					console.warn(`Failed to read file ${file.path} for tags:`, error);
 				}
 			}
 			this.allTags = Array.from(tagSet).sort();
+			this.allFolders = Array.from(folderSet).sort();
 
 			// Update tag dropdown with new tags
 			this.renderTagDropdownItems();
@@ -359,7 +572,35 @@ export class VisualDashboardView extends ItemView {
 				files = files.filter((f: TFile) => {
 					const content = fileContents.get(f.path) || '';
 					const tags = extractTags(content);
-					return tags.includes(this.filterTag!);
+					// Support nested tags: #parent should match #parent, #parent/child, etc.
+					return tags.some(tag => tagMatchesFilter(tag, this.filterTag!));
+				});
+			}
+
+			// Apply folder filter (includes subfolders)
+			if (this.filterFolder) {
+				files = files.filter((f: TFile) => {
+					const fileFolderPath = f.parent?.path || '';
+					// Include files in the folder and all subfolders
+					return isFileInFolderOrSubfolder(fileFolderPath, this.filterFolder!);
+				});
+			}
+
+			// Apply type filter
+			if (this.filterType) {
+				files = files.filter((f: TFile) => {
+					return f.extension.toLowerCase() === this.filterType;
+				});
+			}
+
+			// Apply color filter
+			if (this.filterColor) {
+				files = files.filter((f: TFile) => {
+					const savedColor = this.plugin.data.noteColors[f.path];
+					if (this.filterColor === 'none') {
+						return !savedColor;
+					}
+					return savedColor === this.filterColor;
 				});
 			}
 
@@ -404,22 +645,10 @@ export class VisualDashboardView extends ItemView {
 			// Check if we need sections (both pinned and unpinned exist)
 			const needsSections = displayPinned.length > 0 && displayUnpinned.length > 0;
 
-			// Helper to set appropriate layout based on item count
-			// Uses flexbox for few items to ensure horizontal distribution
-			const setColumnClass = (element: HTMLElement, count: number) => {
-				if (count <= 4) {
-					element.addClass('flex-layout');
-					if (count === 3) element.addClass('cols-3');
-					else if (count === 4) element.addClass('cols-4');
-				}
-				// For 5+ items, use responsive CSS columns (default)
-			};
-
 			if (needsSections) {
 				// Render pinned section
 				if (displayPinned.length > 0) {
 					const pinnedGrid = this.miniNotesGrid.createDiv({ cls: 'mini-notes-grid-section' });
-					setColumnClass(pinnedGrid, displayPinned.length);
 					for (const file of displayPinned) {
 						const card = await this.createCard(file, globalIndex++);
 						if (card) pinnedGrid.appendChild(card);
@@ -432,7 +661,6 @@ export class VisualDashboardView extends ItemView {
 				// Render all notes section
 				if (displayUnpinned.length > 0) {
 					const notesGrid = this.miniNotesGrid.createDiv({ cls: 'mini-notes-grid-section' });
-					setColumnClass(notesGrid, displayUnpinned.length);
 					for (const file of displayUnpinned) {
 						const card = await this.createCard(file, globalIndex++);
 						if (card) notesGrid.appendChild(card);
@@ -440,9 +668,7 @@ export class VisualDashboardView extends ItemView {
 				}
 			} else {
 				// Single section without header
-				const totalCount = displayPinned.length + displayUnpinned.length;
 				const singleGrid = this.miniNotesGrid.createDiv({ cls: 'mini-notes-grid-section' });
-				setColumnClass(singleGrid, totalCount);
 				for (const file of [...displayPinned, ...displayUnpinned]) {
 					const card = await this.createCard(file, globalIndex++);
 					if (card) singleGrid.appendChild(card);
@@ -571,44 +797,65 @@ export class VisualDashboardView extends ItemView {
 						}
 
 						await this.plugin.savePluginData();
-						colorDropdown.removeClass('show');
+						this.closeAllCardColorDropdowns();
 					})();
 				});
 			});
 
-			// Toggle dropdown on click
+			// Toggle dropdown on click - close others first
 			colorBtn.addEventListener('click', (e: MouseEvent) => {
 				e.stopPropagation();
-				colorDropdown.toggleClass('show', !colorDropdown.hasClass('show'));
-			});
-
-			// Close dropdown when clicking outside
-			card.addEventListener('click', () => {
-				colorDropdown.removeClass('show');
+				const shouldOpen = !colorDropdown.hasClass('show');
+				this.closeAllCardColorDropdowns(shouldOpen ? colorDropdown : undefined);
+				colorDropdown.toggleClass('show', shouldOpen);
+				this.activeCardColorDropdown = shouldOpen ? colorDropdown : null;
 			});
 
 			// Card header with file info
 			const cardHeader = card.createDiv({ cls: 'card-header' });
 
-			// Title
-			const title = cardHeader.createEl('h3', {
-				text: file.basename,
-				cls: 'card-title'
-			});
+			// Title with search highlighting
+			const title = cardHeader.createEl('h3', { cls: 'card-title' });
+			if (this.searchQuery && file.basename.toLowerCase().includes(this.searchQuery)) {
+				this.highlightText(title, file.basename, this.searchQuery);
+			} else {
+				title.textContent = file.basename;
+			}
 			title.setAttribute('title', file.basename);
 
 			// Card content (preview) - render with Obsidian's markdown renderer
 			const cardContent = card.createDiv({ cls: 'card-content' });
-			if (previewText.trim()) {
+
+			// Check if this is a PDF file
+			const isPdf = file.extension.toLowerCase() === 'pdf';
+
+			if (isPdf) {
+				// PDF preview
+				const pdfPreview = cardContent.createDiv({ cls: 'card-pdf-preview' });
+				const pdfIcon = pdfPreview.createDiv({ cls: 'pdf-icon' });
+				setIcon(pdfIcon, 'file-text');
+				pdfPreview.createEl('span', { text: 'PDF document', cls: 'pdf-label' });
+				pdfPreview.createEl('span', { text: this.formatFileSize(file.stat.size), cls: 'pdf-size' });
+				card.addClass('card-pdf');
+			} else if (previewText.trim()) {
 				const previewContainer = cardContent.createDiv({ cls: 'card-preview' });
-				// Render markdown natively with Obsidian's renderer (preserves tables, code, etc.)
-				await MarkdownRenderer.render(
-					this.app,
-					markdownPreview,
-					previewContainer,
-					file.path,
-					this
-				);
+
+				// Apply search highlighting if there's a search query
+				if (this.searchQuery) {
+					// Render as text with highlighting for search results
+					const strippedContent = stripMarkdown(content).substring(0, MAX_PREVIEW_LENGTH);
+					this.highlightText(previewContainer, strippedContent, this.searchQuery);
+					previewContainer.addClass('search-highlighted');
+				} else {
+					// Render markdown natively with Obsidian's renderer (preserves tables, code, etc.)
+					await MarkdownRenderer.render(
+						this.app,
+						markdownPreview,
+						previewContainer,
+						file.path,
+						this
+					);
+				}
 			} else {
 				cardContent.createEl('p', {
 					text: 'Empty note...',
@@ -624,7 +871,7 @@ export class VisualDashboardView extends ItemView {
 			const tags = extractTags(content);
 			if (tags.length > 0) {
 				tags.slice(0, 3).forEach(tag => {
-					tagsContainer.createSpan({ cls: 'card-tag', text: tag });
+					tagsContainer.createSpan({ cls: 'card-tag', text: formatTagForDisplay(tag) });
 				});
 				if (tags.length > 3) {
 					tagsContainer.createSpan({ cls: 'card-tag-more', text: `+${tags.length - 3}` });
@@ -647,8 +894,6 @@ export class VisualDashboardView extends ItemView {
 			card.addEventListener('dragstart', (e: DragEvent) => this.handleDragStart(e, card));
 			card.addEventListener('dragend', (e: DragEvent) => this.handleDragEnd(e, card));
 			card.addEventListener('dragover', (e: DragEvent) => this.handleDragOver(e, card));
-			card.addEventListener('dragenter', (e: DragEvent) => this.handleDragEnter(e, card));
-			card.addEventListener('dragleave', (e: DragEvent) => this.handleDragLeave(e, card));
 			card.addEventListener('drop', (e: DragEvent) => void this.handleDrop(e, card));
 		} catch (error) {
 			console.warn(`Skipping card for ${file.path} due to error:`, error);
@@ -659,9 +904,25 @@ export class VisualDashboardView extends ItemView {
 		return card;
 	}
 
+	// Card color dropdown management
+	private closeAllCardColorDropdowns(except?: HTMLElement) {
+		const dropdowns = this.miniNotesGrid.querySelectorAll('.card-color-dropdown.show');
+		dropdowns.forEach(dropdown => {
+			if (dropdown !== except) {
+				dropdown.classList.remove('show');
+			}
+		});
+		if (!except) {
+			this.activeCardColorDropdown = null;
+		}
+	}
+
 	// Drag and Drop Handlers
 	handleDragStart(e: DragEvent, card: HTMLElement) {
 		this.draggedCard = card;
+		this.dragOverTargetCard = null;
+		this.pendingDragTargetCard = null;
+		this.pendingDragClientY = null;
 		card.classList.add('dragging');
 
 		if (e.dataTransfer) {
@@ -672,12 +933,32 @@ export class VisualDashboardView extends ItemView {
 
 	handleDragEnd(e: DragEvent, card: HTMLElement) {
 		card.classList.remove('dragging');
+		if (this.dragFrameId !== null) {
+			window.cancelAnimationFrame(this.dragFrameId);
+			this.dragFrameId = null;
+		}
+		this.pendingDragTargetCard = null;
+		this.pendingDragClientY = null;
+		this.setDragOverTarget(null);
 		this.draggedCard = null;
+	}
 
-		// Remove all drag-over classes
-		this.miniNotesGrid.querySelectorAll('.drag-over').forEach(el => {
-			el.classList.remove('drag-over');
-		});
+	private setDragOverTarget(target: HTMLElement | null) {
+		if (this.dragOverTargetCard && this.dragOverTargetCard !== target) {
+			this.dragOverTargetCard.classList.remove('drag-over');
+		}
+		this.dragOverTargetCard = target;
+		if (target) {
+			target.classList.add('drag-over');
+		}
+	}
+
+	private applyPendingDragReorder() {
+		const targetCard = this.pendingDragTargetCard;
+		if (!targetCard || !this.draggedCard || targetCard === this.draggedCard) {
+			return;
+		}
+		this.setDragOverTarget(targetCard);
 	}
 
 	handleDragOver(e: DragEvent, card: HTMLElement) {
@@ -685,17 +966,18 @@ export class VisualDashboardView extends ItemView {
 		if (e.dataTransfer) {
 			e.dataTransfer.dropEffect = 'move';
 		}
-	}
 
-	handleDragEnter(e: DragEvent, card: HTMLElement) {
-		e.preventDefault();
-		if (card !== this.draggedCard) {
-			card.classList.add('drag-over');
+		if (!this.draggedCard || card === this.draggedCard) return;
+
+		this.pendingDragTargetCard = card;
+		this.pendingDragClientY = e.clientY;
+
+		if (this.dragFrameId === null) {
+			this.dragFrameId = window.requestAnimationFrame(() => {
+				this.dragFrameId = null;
+				this.applyPendingDragReorder();
+			});
 		}
-	}
-
-	handleDragLeave(e: DragEvent, card: HTMLElement) {
-		card.classList.remove('drag-over');
 	}
 
 	handleDrop(e: DragEvent, targetCard: HTMLElement) {
@@ -726,7 +1008,43 @@ export class VisualDashboardView extends ItemView {
 		void this.plugin.updateOrder(currentOrder).then(() => this.renderCards());
 	}
 
+	// Helper method to highlight search text
+	private highlightText(container: HTMLElement, text: string, query: string) {
+		const lowerText = text.toLowerCase();
+		const lowerQuery = query.toLowerCase();
+		let lastIndex = 0;
+		let matchIndex = lowerText.indexOf(lowerQuery);
+
+		while (matchIndex !== -1) {
+			// Add text before match
+			if (matchIndex > lastIndex) {
+				container.appendText(text.substring(lastIndex, matchIndex));
+			}
+			// Add highlighted match
+			const matchText = text.substring(matchIndex, matchIndex + query.length);
+			container.createEl('mark', { text: matchText, cls: 'search-highlight' });
+			lastIndex = matchIndex + query.length;
+			matchIndex = lowerText.indexOf(lowerQuery, lastIndex);
+		}
+		// Add remaining text
+		if (lastIndex < text.length) {
+			container.appendText(text.substring(lastIndex));
+		}
+	}
+
+	// Helper method to format file size
+	private formatFileSize(bytes: number): string {
+		if (bytes < 1024) return `${bytes} B`;
+		if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+		return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+	}
+
 	async onClose() {
+		// Cancel any pending animation frame
+		if (this.dragFrameId !== null) {
+			window.cancelAnimationFrame(this.dragFrameId);
+			this.dragFrameId = null;
+		}
 
 		// Event cleanup handled automatically by registerEvent
 		this.contentEl.empty();

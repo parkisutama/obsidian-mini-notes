@@ -11,7 +11,8 @@ export class QuickNoteBar {
 
     constructor(plugin: VisualDashboardPlugin) {
         this.plugin = plugin;
-        this.container = createDiv({ cls: 'quick-note-bar' });
+        this.container = document.createElement('div');
+        this.container.addClass('quick-note-bar');
     }
 
     getElement(): HTMLElement {
@@ -57,16 +58,16 @@ export class QuickNoteBar {
         // Auto-resize textarea
         this.contentInput.addEventListener('input', () => {
             if (this.contentInput) {
-                this.contentInput.style.height = 'auto';
-                this.contentInput.style.height = this.contentInput.scrollHeight + 'px';
+                this.contentInput.setCssProps({ 'height': 'auto' });
+                this.contentInput.setCssProps({ 'height': `${this.contentInput.scrollHeight}px` });
             }
         });
 
         // Actions bar
-        const actionsBar = this.container.createDiv({ cls: 'quick-note-actions-bar' });
+        const actionsBarEl = this.container.createDiv({ cls: 'quick-note-actions-bar' });
 
         // Right side buttons
-        const rightActions = actionsBar.createDiv({ cls: 'quick-note-actions-right' });
+        const rightActions = actionsBarEl.createDiv({ cls: 'quick-note-actions-right' });
 
         const closeBtn = rightActions.createEl('button', {
             text: 'Close',
@@ -81,9 +82,9 @@ export class QuickNoteBar {
             text: 'Save',
             cls: 'quick-note-button quick-note-button-primary'
         });
-        saveBtn.addEventListener('click', async (e: MouseEvent) => {
+        saveBtn.addEventListener('click', (e: MouseEvent) => {
             e.stopPropagation();
-            await this.saveNote();
+            void this.saveNote();
         });
 
         // Close on Escape for both inputs
@@ -185,8 +186,8 @@ export class QuickNoteModal {
         // Header
         const header = this.modalEl.createDiv({ cls: 'quick-note-modal-header' });
 
-        const title = header.createDiv({ cls: 'quick-note-modal-title' });
-        title.textContent = 'New Note';
+        const titleEl = header.createDiv({ cls: 'quick-note-modal-title' });
+        titleEl.textContent = 'New note';
 
         const closeIcon = header.createDiv({ cls: 'quick-note-icon quick-note-modal-close' });
         setIcon(closeIcon, 'x');
@@ -212,13 +213,10 @@ export class QuickNoteModal {
         // Auto-resize textarea
         this.contentInput.addEventListener('input', () => {
             if (this.contentInput) {
-                this.contentInput.style.height = 'auto';
-                this.contentInput.style.height = this.contentInput.scrollHeight + 'px';
+                this.contentInput.setCssProps({ 'height': 'auto' });
+                this.contentInput.setCssProps({ 'height': `${this.contentInput.scrollHeight}px` });
             }
         });
-
-        // Actions bar
-        const actionsBar = body.createDiv({ cls: 'quick-note-actions-bar' });
 
         // Footer
         const footer = this.modalEl.createDiv({ cls: 'quick-note-modal-footer' });
@@ -227,8 +225,8 @@ export class QuickNoteModal {
             text: 'Save',
             cls: 'quick-note-button quick-note-button-primary'
         });
-        saveBtn.addEventListener('click', async () => {
-            await this.saveNote();
+        saveBtn.addEventListener('click', () => {
+            void this.saveNote();
         });
 
         // Close on backdrop click

@@ -15,14 +15,14 @@ export default class VisualDashboardPlugin extends Plugin {
 			// Register file rename handler to preserve note colors, pins, and order
 			this.registerEvent(
 				this.app.vault.on('rename', (file: TAbstractFile, oldPath: string) => {
-					this.handleFileRename(file, oldPath);
+					void this.handleFileRename(file, oldPath);
 				})
 			);
 
 			// Register file delete handler to clean up stored data
 			this.registerEvent(
 				this.app.vault.on('delete', (file: TAbstractFile) => {
-					this.handleFileDelete(file);
+					void this.handleFileDelete(file);
 				})
 			);
 
@@ -174,9 +174,11 @@ export default class VisualDashboardPlugin extends Plugin {
 			if (this.data.useObsidianDefault) {
 				// Use Obsidian's default folder setting
 				// @ts-expect-error: accessing internal Obsidian API
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 				const defaultFolder = this.app.vault.getConfig('newFileLocation') as string;
 
 				// @ts-expect-error: accessing internal Obsidian API
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 				const specifiedFolder = this.app.vault.getConfig('newFileFolderPath') as string;
 
 				if (defaultFolder === 'folder' && specifiedFolder) {
@@ -241,9 +243,11 @@ export default class VisualDashboardPlugin extends Plugin {
 			if (this.data.useObsidianDefault) {
 				// Use Obsidian's default folder setting
 				// @ts-expect-error: accessing internal Obsidian API
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 				const defaultFolder = this.app.vault.getConfig('newFileLocation') as string;
 
 				// @ts-expect-error: accessing internal Obsidian API
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 				const specifiedFolder = this.app.vault.getConfig('newFileFolderPath') as string;
 
 				if (defaultFolder === 'folder' && specifiedFolder) {
