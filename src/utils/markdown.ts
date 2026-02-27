@@ -1,4 +1,25 @@
-const TAG_SEGMENT_PATTERN = '[0-9A-Za-z_-]+(?:\/[0-9A-Za-z_-]+)*';
+const TAG_SEGMENT_PATTERN = '[0-9A-Za-z_-]+(?:/[0-9A-Za-z_-]+)*';
+
+// Format tag for display: remove # and replace - with space
+export function formatTagForDisplay(tag: string): string {
+	return tag.replace(/^#/, '').replace(/-/g, ' ');
+}
+
+// Check if a tag matches a filter (supports nested tags)
+// e.g., filterTag '#parent' should match '#parent', '#parent/child', '#parent/child/grandchild'
+export function tagMatchesFilter(tag: string, filterTag: string): boolean {
+	if (tag === filterTag) return true;
+	// Check if tag is a child of filterTag (e.g., #parent/child starts with #parent/)
+	return tag.startsWith(filterTag + '/');
+}
+
+// Check if file path is within a folder or its subfolders
+export function isFileInFolderOrSubfolder(filePath: string, folderPath: string): boolean {
+	// Exact match for files directly in the folder
+	if (filePath === folderPath) return true;
+	// Check if file is in folder or subfolder
+	return filePath.startsWith(folderPath + '/');
+}
 
 // Extract tags from YAML frontmatter
 function extractFrontmatterTags(content: string): string[] {
@@ -98,6 +119,18 @@ export function stripMarkdown(content: string): string {
 export function getPreviewText(content: string, maxLength: number): string {
 	let text = stripMarkdown(content);
 	text = text.replace(/\n{2,}/g, '\n').trim();
+
+	if (text.length > maxLength) {
+		text = text.substring(0, maxLength).trim() + '...';
+	}
+
+	return text;
+}
+
+// Get markdown content for rendering (only strips frontmatter, preserves markdown syntax)
+export function getMarkdownForPreview(content: string, maxLength: number): string {
+	// Only remove YAML frontmatter, keep all markdown formatting
+	let text = content.replace(/^---[\s\S]*?---\n?/, '').trim();
 
 	if (text.length > maxLength) {
 		text = text.substring(0, maxLength).trim() + '...';

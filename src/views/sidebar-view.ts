@@ -1,7 +1,7 @@
 import { ItemView, TFile, WorkspaceLeaf, setIcon, MarkdownRenderer, Menu } from 'obsidian';
 import type VisualDashboardPlugin from '../main';
 import { VIEW_TYPE_SIDEBAR } from '../types';
-import { extractTags, stripMarkdown } from '../utils/markdown';
+import { extractTags, stripMarkdown, getMarkdownForPreview, formatTagForDisplay, tagMatchesFilter, isFileInFolderOrSubfolder } from '../utils/markdown';
 import { formatDate } from '../utils/date';
 import { DEBOUNCE_REFRESH_MS } from '../constants';
 import { QuickNoteBar } from './quick-note-bar';
@@ -18,7 +18,10 @@ export class SidebarView extends ItemView {
     // Filter state
     private filterPinned: 'all' | 'pinned' | 'unpinned' = 'all';
     private filterTag: string | null = null;
+    private filterFolder: string | null = null;
+    private filterColor: string | null = null;
     private allTags: string[] = [];
+    private allFolders: string[] = [];
     private searchQuery: string = '';
 
     constructor(leaf: WorkspaceLeaf, plugin: VisualDashboardPlugin) {
@@ -84,6 +87,43 @@ export class SidebarView extends ItemView {
             void this.renderNotesList();
         });
 
+        // Folder filter
+        const folderBtn = filterGroup.createDiv({ cls: 'filter-icon' });
+        setIcon(folderBtn, 'folder');
+        folderBtn.setAttribute('aria-label', 'Filter by folder');
+        folderBtn.addEventListener('click', (e: MouseEvent) => {
+            const menu = new Menu();
+
+            // Add "All folders" option
+            menu.addItem((item) => {
+                item.setTitle('All folders')
+                    .setChecked(this.filterFolder === null)
+                    .onClick(() => {
+                        this.filterFolder = null;
+                        folderBtn.removeClass('active');
+                        void this.renderNotesList();
+                    });
+            });
+
+            // Add separator
+            menu.addSeparator();
+
+            // Add folders
+            this.allFolders.forEach(folder => {
+                menu.addItem((item) => {
+                    item.setTitle(folder)
+                        .setChecked(this.filterFolder === folder)
+                        .onClick(() => {
+                            this.filterFolder = folder;
+                            folderBtn.addClass('active');
+                            void this.renderNotesList();
+                        });
+                });
+            });
+
+            menu.showAtMouseEvent(e);
+        });
+
         // Tag filter
         const tagBtn = filterGroup.createDiv({ cls: 'filter-icon' });
         setIcon(tagBtn, 'tag');
@@ -113,6 +153,65 @@ export class SidebarView extends ItemView {
                         .onClick(() => {
                             this.filterTag = tag;
                             tagBtn.addClass('active');
+                            void this.renderNotesList();
+                        });
+                });
+            });
+
+            menu.showAtMouseEvent(e);
+        });
+
+        // Color filter
+        const colorBtn = filterGroup.createDiv({ cls: 'filter-icon' });
+        setIcon(colorBtn, 'palette');
+        colorBtn.setAttribute('aria-label', 'Filter by color');
+        colorBtn.addEventListener('click', (e: MouseEvent) => {
+            const menu = new Menu();
+
+            // Add "All colors" option
+            menu.addItem((item) => {
+                item.setTitle('All colors')
+                    .setChecked(this.filterColor === null)
+                    .onClick(() => {
+                        this.filterColor = null;
+                        colorBtn.removeClass('active');
+                        void this.renderNotesList();
+                    });
+            });
+
+            // Add "No color" option
+            menu.addItem((item) => {
+                item.setTitle('No color')
+                    .setChecked(this.filterColor === 'none')
+                    .onClick(() => {
+                        this.filterColor = 'none';
+                        colorBtn.addClass('active');
+                        void this.renderNotesList();
+                    });
+            });
+
+            // Add separator
+            menu.addSeparator();
+
+            // Add color options
+            const colorOptions = [
+                { name: 'Pink', color: 'var(--pastel-pink)' },
+                { name: 'Peach', color: 'var(--pastel-peach)' },
+                { name: 'Yellow', color: 'var(--pastel-yellow)' },
+                { name: 'Green', color: 'var(--pastel-green)' },
+                { name: 'Blue', color: 'var(--pastel-blue)' },
+                { name: 'Purple', color: 'var(--pastel-purple)' },
+                { name: 'Magenta', color: 'var(--pastel-magenta)' }
+            ];
+
+            colorOptions.forEach(({ name, color }) => {
+                menu.addItem((item) => {
+                    item.setTitle(name)
+                        .setIcon('palette')
+                        .setChecked(this.filterColor === color)
+                        .onClick(() => {
+                            this.filterColor = color;
+                            colorBtn.addClass('active');
                             void this.renderNotesList();
                         });
                 });
@@ -227,8 +326,10 @@ export class SidebarView extends ItemView {
                 });
             }
 
-            // Collect all tags
+            // Collect all tags and folders
             this.allTags = [];
+            this.allFolders = [];
+            const folderSet = new Set<string>();
             for (const file of files) {
                 const content = await this.app.vault.cachedRead(file);
                 const tags = extractTags(content);
@@ -237,8 +338,14 @@ export class SidebarView extends ItemView {
                         this.allTags.push(tag);
                     }
                 });
+                // Collect folder path
+                const folder = file.parent?.path;
+                if (folder) {
+                    folderSet.add(folder);
+                }
             }
             this.allTags.sort();
+            this.allFolders = Array.from(folderSet).sort();
 
             // Sort by modification time (newest first)
             files.sort((a, b) => b.stat.mtime - a.stat.mtime);
@@ -296,17 +403,38 @@ export class SidebarView extends ItemView {
                 filteredFiles = filteredFiles.filter(file => !this.plugin.isPinned(file.path));
             }
 
-            // Apply tag filter
+            // Apply tag filter (supports nested tags)
             if (this.filterTag) {
                 const tagFilteredFiles: TFile[] = [];
                 for (const file of filteredFiles) {
                     const content = await this.app.vault.cachedRead(file);
                     const tags = extractTags(content);
-                    if (tags.includes(this.filterTag)) {
+                    // Support nested tags: #parent should match #parent, #parent/child, etc.
+                    if (tags.some(tag => tagMatchesFilter(tag, this.filterTag!))) {
                         tagFilteredFiles.push(file);
                     }
                 }
                 filteredFiles = tagFilteredFiles;
+            }
+
+            // Apply folder filter (includes subfolders)
+            if (this.filterFolder) {
+                filteredFiles = filteredFiles.filter(file => {
+                    const fileFolderPath = file.parent?.path || '';
+                    // Include files in the folder and all subfolders
+                    return isFileInFolderOrSubfolder(fileFolderPath, this.filterFolder!);
+                });
+            }
+
+            // Apply color filter
+            if (this.filterColor) {
+                filteredFiles = filteredFiles.filter(file => {
+                    const savedColor = this.plugin.data.noteColors[file.path];
+                    if (this.filterColor === 'none') {
+                        return !savedColor;
+                    }
+                    return savedColor === this.filterColor;
+                });
             }
 
             // Apply search filter
@@ -370,14 +498,15 @@ export class SidebarView extends ItemView {
             // Get content for preview
             const content = await this.app.vault.cachedRead(file);
             const cleanContent = stripMarkdown(content);
-            const previewText = cleanContent.slice(0, 150).trim() || 'Empty note...';
+            const previewText = cleanContent.slice(0, 150).trim();
+            const markdownPreview = getMarkdownForPreview(content, 150);
 
             // Note header
             const noteHeader = noteItem.createDiv({ cls: 'note-item-header' });
 
             // Title
             const titleContainer = noteHeader.createDiv({ cls: 'note-item-title-container' });
-            const title = titleContainer.createSpan({
+            titleContainer.createSpan({
                 text: file.basename,
                 cls: 'note-item-title'
             });
@@ -437,10 +566,10 @@ export class SidebarView extends ItemView {
                             .setIcon(color ? 'palette' : 'eraser')
                             .onClick(() => {
                                 if (color) {
-                                    noteItem.style.backgroundColor = color;
+                                    noteItem.setCssProps({ 'background-color': color });
                                     this.plugin.data.noteColors[file.path] = color;
                                 } else {
-                                    noteItem.style.backgroundColor = '';
+                                    noteItem.setCssProps({ 'background-color': '' });
                                     delete this.plugin.data.noteColors[file.path];
                                 }
                                 void this.plugin.savePluginData();
@@ -454,16 +583,32 @@ export class SidebarView extends ItemView {
                     item.setTitle('Delete note')
                         .setIcon('trash')
                         .onClick(() => {
-                            void this.app.vault.delete(file);
+                            void this.app.fileManager.trashFile(file);
                         });
                 });
 
-                menu.showAtMouseEvent(e as MouseEvent);
+                menu.showAtMouseEvent(e);
             });
 
-            // Preview text
+            // Preview text - render with Obsidian's markdown renderer for tables, etc.
             const preview = noteItem.createDiv({ cls: 'note-item-preview' });
-            preview.textContent = previewText;
+            if (previewText.trim()) {
+                // Apply search highlighting if there's a search query
+                if (this.searchQuery) {
+                    this.highlightText(preview, previewText, this.searchQuery);
+                    preview.addClass('search-highlighted');
+                } else {
+                    await MarkdownRenderer.render(
+                        this.app,
+                        markdownPreview,
+                        preview,
+                        file.path,
+                        this
+                    );
+                }
+            } else {
+                preview.textContent = 'Empty note...';
+            }
 
             // Footer with metadata
             const footer = noteItem.createDiv({ cls: 'note-item-footer' });
@@ -473,7 +618,7 @@ export class SidebarView extends ItemView {
             if (tags.length > 0) {
                 const tagsContainer = footer.createDiv({ cls: 'note-item-tags' });
                 tags.slice(0, 2).forEach(tag => {
-                    tagsContainer.createSpan({ cls: 'note-item-tag', text: tag });
+                    tagsContainer.createSpan({ cls: 'note-item-tag', text: formatTagForDisplay(tag) });
                 });
                 if (tags.length > 2) {
                     tagsContainer.createSpan({ cls: 'note-item-tag-more', text: `+${tags.length - 2}` });
@@ -511,6 +656,30 @@ export class SidebarView extends ItemView {
     async refreshView() {
         await this.loadNotes();
         await this.renderNotesList();
+    }
+
+    // Helper method to highlight search text
+    private highlightText(container: HTMLElement, text: string, query: string) {
+        const lowerText = text.toLowerCase();
+        const lowerQuery = query.toLowerCase();
+        let lastIndex = 0;
+        let matchIndex = lowerText.indexOf(lowerQuery);
+
+        while (matchIndex !== -1) {
+            // Add text before match
+            if (matchIndex > lastIndex) {
+                container.appendText(text.substring(lastIndex, matchIndex));
+            }
+            // Add highlighted match
+            const matchText = text.substring(matchIndex, matchIndex + query.length);
+            container.createEl('mark', { text: matchText, cls: 'search-highlight' });
+            lastIndex = matchIndex + query.length;
+            matchIndex = lowerText.indexOf(lowerQuery, lastIndex);
+        }
+        // Add remaining text
+        if (lastIndex < text.length) {
+            container.appendText(text.substring(lastIndex));
+        }
     }
 
     async onClose() {

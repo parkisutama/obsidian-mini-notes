@@ -13,8 +13,8 @@ export class MiniNotesSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 		containerEl.empty();
 
-		// View settings section
-		containerEl.createEl('h3', { text: 'View settings' });
+		// View section
+		new Setting(containerEl).setName("View").setHeading();
 
 		new Setting(containerEl)
 			.setName('Default view type')
@@ -82,10 +82,11 @@ export class MiniNotesSettingTab extends PluginSettingTab {
 			);
 
 		// New notes location settings
-		containerEl.createEl('h3', { text: 'New notes location' });
+		new Setting(containerEl).setName("New notes location").setHeading();
 
 		new Setting(containerEl)
-			.setName('Use Obsidian default folder')
+			.setName('Use default folder')
+			// eslint-disable-next-line obsidianmd/ui/sentence-case -- Menu path reference
 			.setDesc('Create new notes in the folder specified in Obsidian settings (Settings > Files & Links > Default location for new notes)')
 			.addToggle(toggle => toggle
 				.setValue(this.plugin.data.useObsidianDefault)
@@ -120,7 +121,7 @@ export class MiniNotesSettingTab extends PluginSettingTab {
 				});
 
 				// Add option to create new folder
-				dropdown.addOption('Mini Notes', 'Mini Notes');
+				dropdown.addOption('Mini Notes', 'Mini notes');
 
 				dropdown.setValue(this.plugin.data.newNotesFolder);
 				dropdown.onChange(async (value) => {
@@ -145,7 +146,7 @@ export class MiniNotesSettingTab extends PluginSettingTab {
 			);
 
 		// Auto-create folder settings
-		containerEl.createEl('h3', { text: 'Auto-create folder' });
+		new Setting(containerEl).setName("Auto-create folder").setHeading();
 
 		new Setting(containerEl)
 			.setName('Auto-create folder on startup')
@@ -164,9 +165,11 @@ export class MiniNotesSettingTab extends PluginSettingTab {
 			);
 
 		const folderPathSetting = new Setting(containerEl)
-			.setName('Folder name and path')
+			.setName('Folder path')
+
 			.setDesc('The folder to create automatically (e.g., "Mini Notes" or "Notes/Mini Notes")')
 			.addText(text => text
+				// eslint-disable-next-line obsidianmd/ui/sentence-case -- Placeholder example
 				.setPlaceholder('Mini Notes')
 				.setValue(this.plugin.data.autoCreateFolderPath)
 				.onChange(async (value) => {
@@ -180,7 +183,7 @@ export class MiniNotesSettingTab extends PluginSettingTab {
 		folderPathSetting.settingEl.style.display = this.plugin.data.autoCreateFolder ? 'flex' : 'none';
 
 		// Excluded folders settings
-		containerEl.createEl('h3', { text: 'Folder exclusions' });
+		new Setting(containerEl).setName("Folder exclusions").setHeading();
 
 		new Setting(containerEl)
 			.setName('Excluded folders')
@@ -204,9 +207,9 @@ export class MiniNotesSettingTab extends PluginSettingTab {
 					itemEl.createSpan({ text: folder });
 
 					const removeBtn = itemEl.createEl('button', { text: '×', cls: 'excluded-folder-remove' });
-					removeBtn.addEventListener('click', async () => {
+					removeBtn.addEventListener('click', () => {
 						this.plugin.data.excludedFolders.splice(index, 1);
-						await this.plugin.savePluginData();
+						void this.plugin.savePluginData();
 						this.app.workspace.trigger('mini-notes:settings-changed');
 						renderExcludedList();
 					});
@@ -248,7 +251,7 @@ export class MiniNotesSettingTab extends PluginSettingTab {
 			});
 
 		// Allowed extensions settings
-		containerEl.createEl('h3', { text: 'File extensions' });
+		new Setting(containerEl).setName("File extensions").setHeading();
 
 		new Setting(containerEl)
 			.setName('Allowed file extensions')
@@ -272,9 +275,9 @@ export class MiniNotesSettingTab extends PluginSettingTab {
 					itemEl.createSpan({ text: `.${ext}` });
 
 					const removeBtn = itemEl.createEl('button', { text: '×', cls: 'extension-remove' });
-					removeBtn.addEventListener('click', async () => {
+					removeBtn.addEventListener('click', () => {
 						this.plugin.data.allowedExtensions.splice(index, 1);
-						await this.plugin.savePluginData();
+						void this.plugin.savePluginData();
 						this.app.workspace.trigger('mini-notes:settings-changed');
 						renderExtensionsList();
 					});
@@ -286,16 +289,18 @@ export class MiniNotesSettingTab extends PluginSettingTab {
 
 		// Add extension input
 		new Setting(containerEl)
-			.setName('Add file extension')
+			.setName('New extension')
+
 			.setDesc('Enter extension without the dot (e.g., "md", "txt", "canvas")')
 			.addText(text => {
+				// eslint-disable-next-line obsidianmd/ui/sentence-case -- Technical value
 				text.setPlaceholder('txt');
-				text.inputEl.addEventListener('keydown', async (e: KeyboardEvent) => {
+				text.inputEl.addEventListener('keydown', (e: KeyboardEvent) => {
 					if (e.key === 'Enter') {
 						const value = text.getValue().trim().toLowerCase().replace(/^\.+/, '');
 						if (value && !this.plugin.data.allowedExtensions.includes(value)) {
 							this.plugin.data.allowedExtensions.push(value);
-							await this.plugin.savePluginData();
+							void this.plugin.savePluginData();
 							this.app.workspace.trigger('mini-notes:settings-changed');
 							renderExtensionsList();
 							text.setValue('');
